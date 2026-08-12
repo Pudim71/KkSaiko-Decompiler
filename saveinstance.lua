@@ -73,7 +73,7 @@ local service = setmetatable({}, {
 		return Service
 	end,
 })
-local sharedStringId = 1e15 enough for all sharedstrings ever imaginable
+local sharedStringId = 1e15
 local sharedStrings = setmetatable({}, {
 	__index = function(self, str)
 		local id = base64encode(tostring(sharedStringId))
