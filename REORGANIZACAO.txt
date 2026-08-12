@@ -1,0 +1,60 @@
+REORGANIZAÇÃO COMPLETA ✓
+=======================
+
+ESTRUTURA NOVA:
+===============
+
+📦 Tools/
+├── 📁 lib/                          (Bibliotecas compartilhadas)
+│   ├── api.py                       ✓ API fetching & cache
+│   ├── dump.py                      ✓ Dump utilities
+│   └── __init__.py
+│
+├── 📁 Analyzers/                    (Scripts de análise)
+│   ├── DataType_Dumper.py          ✓ Análise de tipos de dados
+│   ├── Property_Behavior.py        ✓ Análise de comportamento de propriedades
+│   ├── Default_Props.py            ✓ Valores padrão de propriedades
+│   ├── Tags_Analyzer.py            ✓ Análise de tags
+│   ├── Inheritance_Check.py        ✓ Verificação de herança
+│   ├── NotCreatable_Classes.py     ✓ Listagem de classes NotCreatable
+│   ├── Content_Properties.py       ✓ Propriedades de Content
+│   ├── Class_Properties.py         ✓ Propriedades de classe
+│   └── __init__.py
+│
+├── Run_Dumpers.py                  ✓ Executor principal
+└── README.md                        ✓ Documentação
+
+MELHORIAS REALIZADAS:
+====================
+
+1. ✓ Código separado em módulos menores e específicos
+2. ✓ Cada script tem responsabilidade única
+3. ✓ Arquivos de biblioteca reutilizáveis
+4. ✓ Nomes descritivos e em inglês
+5. ✓ Código mais limpo (sem comentários desnecessários)
+6. ✓ Estrutura consistente e profissional
+7. ✓ Fácil manutenção e expansão futura
+
+COMO USAR:
+==========
+
+python Run_Dumpers.py [version_hash]
+
+Exemplo:
+python Run_Dumpers.py 2a0bb6c7be244b7496e1e34c6f1b5c2e
+
+ARQUIVOS ANTIGOS AINDA DISPONÍVEIS:
+===================================
+Os arquivos originais foram mantidos em suas pastas para referência:
+- Content DataType/
+- Default Property Differs/
+- Doesn't Inherit from Class Dumper/
+- ExpectedClassDumper for NotCreatable/
+- Fake NotCreatable Dumper/
+- Interesting Properties Behavior/
+- NilInstance Error Dumper/
+- NotCreatable Dumper/
+- NotScriptable-Related/
+- Tags Diffs between Dumps/
+
+Você pode deletá-los após verificar que os novos scripts funcionam corretamente.
