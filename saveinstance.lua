@@ -2860,29 +2860,7 @@ end
 
 local GLOBAL_ENV = getgenv and getgenv() or _G or shared
 
-    @class SynSaveInstance
-    Represents the options for saving instances with custom settings using the synsaveinstance function.
-]=]
 
-	@function saveinstance
-	Saves instances with specified options. Example:
-	```lua
-	local Params = {
-		RepoURL = "https://raw.githubusercontent.com/luau/UniversalSynSaveInstance/main/",
-		SSI = "saveinstance",
-	}
-
-	local synsaveinstance = loadstring(game:HttpGet(Params.RepoURL .. Params.SSI .. ".luau", true), Params.SSI)()
-
-	local CustomOptions = { SafeMode = false, DecompileTimeout = 15, SaveBytecode = true }
-
-	synsaveinstance(CustomOptions)
-	```
-	@within SynSaveInstance
-	@yields
-	@param Parameter_1 variant<table, table<Instance>> 
-	@param Parameter_2 table 
-]=]
 
 local function synsaveinstance(CustomOptions, CustomOptions2)
 	if GLOBAL_ENV.USSI then
