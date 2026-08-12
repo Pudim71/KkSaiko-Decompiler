@@ -5,7 +5,7 @@ local Config = {
         RbxCharacterSounds = true,
         PlayerScriptsLoader = true,
     },
-    SavePlayersInFolder = false,
+    SavePlayersInFolder = true,
     PlayersFolder = "Players",
 }
 
