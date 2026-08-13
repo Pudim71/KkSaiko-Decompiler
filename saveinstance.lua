@@ -4163,7 +4163,7 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 										if DecompileIgnoring == 1 then
 											DecompileIgnoring = nil
 										end
-										value = "
+										value = "-- Code Empty"
 									else
 										local should_decompile = true
 										local LinkedSource
@@ -4190,9 +4190,9 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 													end
 												end
 												if should_decompile then
-													if DecompileJobless then
-														value = "
-														should_decompile = nil
+												if DecompileJobless then
+													value = "-- Not found in LinkedSource ScriptCache"
+													should_decompile = nil
 													end
 
 													LinkedSource_type = string.find(LinkedSource, "%a") and "hash"
@@ -4233,9 +4233,9 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 												or not isLocalScript
 													and instance:IsA("Script")
 													and instance.RunContext ~= Enum.RunContext.Client
-											then
-												value = "
-											else
+										then
+											value = "-- [FilteringEnabled] Server Scripts are IMPOSSIBLE to save" -- TODO: Could be not just server scripts in the future
+										else
 												value = ldecompile(instance)
 												if SaveBytecode then
 													local output = SaveBytecode(instance)
@@ -4438,9 +4438,8 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 				"README",
 				nil,
 				nil,
-				"Script",
-				"
-					.. service.HttpService:JSONEncode(OPTIONS)
+			"Script",
+				.. service.HttpService:JSONEncode(OPTIONS)
 					.. "\n\n\t\tElapsed time: "
 					.. os.clock() - elapse_t
 					.. " Date (UTC): "
