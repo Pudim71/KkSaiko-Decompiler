@@ -1553,7 +1553,7 @@ do
 				local attrs = instance:GetAttributes()
 
 				if not next(attrs) then
-					return ""
+					return """
 				end
 
 				return AttributesSerialize(attrs)
@@ -1565,7 +1565,7 @@ do
 				local tags = service.CollectionService:GetTags(instance)
 
 				if #tags == 0 then
-					return ""
+					return """
 				end
 
 				return table.concat(tags, "\0")
@@ -1577,7 +1577,7 @@ do
 				local n = #control_points
 
 				if n == 0 then
-					return "\0\0\0\0"
+					return ""\0\0\0\0"
 				end
 
 				local b = buffer.create(4 + n * 49)
@@ -1634,7 +1634,7 @@ do
 				local EmulatedPolicyInfo = instance:GetEmulatedPolicyInfo()
 
 				if not next(EmulatedPolicyInfo) then
-					return ""
+					return """
 				end
 
 				return AttributesSerialize(EmulatedPolicyInfo)
@@ -1645,7 +1645,7 @@ do
 				local props = instance:GetProperties()
 
 				if not next(props) then
-					return "\0\0\0\0"
+					return ""\0\0\0\0"
 				end
 
 				return AttributesSerialize(props)
@@ -1654,7 +1654,7 @@ do
 				local transitions = instance:GetPropertyTransitions()
 
 				if not next(transitions) then
-					return "\2\0\0\0\0\0"
+					return ""\2\0\0\0\0\0"
 				end
 
 				return AttributesSerialize(transitions, { 0x02, 0x00 })
@@ -1665,7 +1665,7 @@ do
 				local props = instance:GetConditions()
 
 				if not next(props) then
-					return "\0\0\0\0"
+					return ""\0\0\0\0"
 				end
 
 				return AttributesSerialize(props)
@@ -1677,7 +1677,7 @@ do
 				local keys = instance:GetKeys()
 
 				if #keys == 0 then
-					return "\2\0\0\0\0\0\0\0\1\0\0\0\0\0\0\0"
+					return ""\2\0\0\0\0\0\0\0\1\0\0\0\0\0\0\0"
 				end
 
 				local valuesPayloadSize = #keys * 14
@@ -1721,7 +1721,7 @@ do
 				local keys = instance:GetKeys()
 
 				if #keys == 0 then
-					return "\1\0\0\0\0\0\0\0\1\0\0\0\0\0\0\0"
+					return ""\1\0\0\0\0\0\0\0\1\0\0\0\0\0\0\0"
 				end
 
 				local perKeySize = 1 + 16 + 4 + 4
@@ -1762,7 +1762,7 @@ do
 				local keys = instance:GetKeys()
 
 				if #keys == 0 then
-					return "\2\0\0\0\0\0\0\0\1\0\0\0\0\0\0\0"
+					return ""\2\0\0\0\0\0\0\0\1\0\0\0\0\0\0\0"
 				end
 
 				local valueTypeName = instance.ValueType
@@ -1778,7 +1778,7 @@ do
 				local encoder = Binary_Encoders[valueTypeName]
 
 				if not encoder then
-					return "\2\0\0\0\0\0\0\0\1\0\0\0\0\0\0\0"
+					return ""\2\0\0\0\0\0\0\0\1\0\0\0\0\0\0\0"
 				end
 
 				local n = #keys
@@ -1838,7 +1838,7 @@ do
 				local n = #markers
 
 				if n == 0 then
-					return "\2\0\0\0\0\0\0\0\1\0\0\0\0\0\0\0"
+					return ""\2\0\0\0\0\0\0\0\1\0\0\0\0\0\0\0"
 				end
 
 				local strings_size = 0
@@ -1871,7 +1871,7 @@ do
 				local n = #input_pins
 
 				if n == 0 then
-					return "\1\0\0\0\0\0\0\0"
+					return ""\1\0\0\0\0\0\0\0"
 				end
 
 				local buffer_size = 8
@@ -1917,7 +1917,7 @@ do
 				local n = #labels
 
 				if n == 0 then
-					return "\1\0\0\0\0\0\0\0"
+					return ""\1\0\0\0\0\0\0\0"
 				end
 
 				local b = buffer.create(8 + n * 4)
@@ -1939,7 +1939,7 @@ do
 				local n = #names
 
 				if n == 0 then
-					return "\1\0\0\0\0\0\0\0"
+					return ""\1\0\0\0\0\0\0\0"
 				end
 
 				local buffer_size = 8
@@ -1971,7 +1971,7 @@ do
 				local n = #parents
 
 				if n == 0 then
-					return "\1\0\0\0\0\0\0\0"
+					return ""\1\0\0\0\0\0\0\0"
 				end
 
 				local b = buffer.create(8 + #parents * 2)
@@ -2005,7 +2005,7 @@ do
 				local n = #userid_accesslist
 
 				if n == 0 then
-					return ""
+					return """
 				end
 
 				local b = buffer.create(n * 8)
@@ -2328,7 +2328,7 @@ do
 			EquippedEmotesDataInternal = function(instance)
 				local equipped_emotes = instance:GetEquippedEmotes()
 				if #equipped_emotes == 0 then
-					return ""
+					return """
 				end
 
 				local equipped_emotes_data = ""
@@ -2415,7 +2415,7 @@ do
 
 				local n = #registered
 				if n == 0 then
-					return ""
+					return """
 				end
 
 				local parts = table.create(n)
@@ -2431,7 +2431,7 @@ do
 				local n = #collision_groups
 
 				if n == 0 then
-					return "\1\0"
+					return ""\1\0"
 				end
 
 				local buffer_size = 2
@@ -3109,7 +3109,7 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 		IgnoreList = { "CoreGui", "CorePackages" },
 
 		ExtraInstances = {},
-		NilInstances = false,
+		NilInstances = true,
 		NilInstancesFixes = {},
 
 		SaveCacheInterval = 0x1600 * 10,
@@ -3799,7 +3799,7 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 			local s, bytecode = getbytecode(script)
 
 			if s and bytecode and bytecode ~= "" then
-				return "
+				return ""
 			end
 		end
 	end
@@ -3807,7 +3807,7 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 	do
 		if not OPTIONS.Decompile then
 			ldecompile = function()
-				return "
+				return ""
 			end
 		elseif decompile then
 			local decomp = makeTimeoutHandler(OPTIONS.DecompileTimeout, decompile, "Decompiler timed out")
@@ -3822,7 +3822,7 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 
 					if s then
 						if not bytecode or bytecode == "" then
-							return "
+				return """
 						end
 						cached = ldeccache[bytecode]
 					else
@@ -3837,7 +3837,7 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 					end
 				else
 					if DecompileJobless then
-						return "
+						return ""
 					end
 
 					-- task.wait() -- TODO Maybe remove?
@@ -3853,7 +3853,7 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 					result = string.gsub(result, "\0", "\\0")
 					output = result
 				else
-					output = "
+					output = ""
 				end
 
 				if ScriptCache and bytecode then
@@ -3867,7 +3867,7 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 			end
 		else
 			ldecompile = function()
-				return "
+				return ""
 			end
 		end
 	end
@@ -4375,7 +4375,7 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 												if DecompileIgnoring == 1 then
 													DecompileIgnoring = nil
 												end
-												value = "
+												value = ""
 											else
 												local should_decompile = true
 												local LinkedSource
@@ -4403,7 +4403,7 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 														end
 														if should_decompile then
 															if DecompileJobless then
-																value = "
+																value = ""
 																should_decompile = nil
 															end
 
@@ -4462,8 +4462,8 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 													end
 												end
 
-												value = "
-													.. (hasLinkedSource and "
+												value = ""
+													.. (hasLinkedSource and "")
 													.. value
 											end
 										end
