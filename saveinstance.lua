@@ -18,7 +18,7 @@ local function arrayToDict(t, mixedMode, valueOverride, typeStrict)
 	local tmp = {}
 
 	if mixedMode then
-		for any1, any2 in next, t do
+		for any1, any2 in t do
 			if type(any1) == "number" then
 				tmp[any2] = valueOverride or true
 			elseif type(any2) == "table" then
@@ -28,7 +28,7 @@ local function arrayToDict(t, mixedMode, valueOverride, typeStrict)
 			end
 		end
 	else
-		for _, key in next, t do
+		for _, key in t do
 			if not typeStrict or typeStrict and type(key) == typeStrict then
 				tmp[key] = true
 			end
@@ -37,6 +37,24 @@ local function arrayToDict(t, mixedMode, valueOverride, typeStrict)
 
 	return tmp
 end
+
+local service = setmetatable({}, {
+	__index = function(self, serviceName)
+		local o, s = pcall(Instance.new, serviceName)
+		local Service = o and s
+			or game:GetService(serviceName)
+			or settings():GetService(serviceName)
+			or UserSettings():GetService(serviceName)
+
+		if cloneref then
+			Service = cloneref(Service)
+		end
+		if Service then
+			self[serviceName] = Service
+		end
+		return Service
+	end,
+})
 
 local global_container
 do
@@ -81,29 +99,11 @@ local writefile = writefile
 local getscriptbytecode = global_container.getscriptbytecode
 local base64encode = global_container.base64encode
 
-local service = setmetatable({}, {
-	__index = function(self, serviceName)
-		local o, s = pcall(Instance.new, serviceName)
-		local Service = o and s
-			or game:GetService(serviceName)
-			or settings():GetService(serviceName)
-			or UserSettings():GetService(serviceName)
-
-		if cloneref then
-			Service = cloneref(Service)
-		end
-		if Service then
-			self[serviceName] = Service
-		end
-		return Service
-	end,
-})
-
 local sharedStringId = 1e15
 local sharedStrings = setmetatable({}, {
 	__index = function(self, str)
 		local id = base64encode(tostring(sharedStringId))
-		sharedStringId = sharedStringId + 1
+		sharedStringId += 1
 
 		self[str] = id
 		return id
@@ -119,7 +119,7 @@ local function getRef(instance)
 	if not ref then
 		ref = refSize
 		referents[instance] = ref
-		refSize = refSize + 1
+		refSize += 1
 	end
 	return ref
 end
@@ -293,10 +293,10 @@ local function countCapabilityBits(raw)
 	-- ! Seems like both tostring & .Contains ignore high / internal bits (anything above CapabilityControl): RemoteCommand, InternalTest, PluginOrOpenCloud, Assistant. They're present when created & saved by Studio but can't be read through current means
 
 	local result = 0
-	for _, flag in next, string.split(tostring(raw), " | ") do
+	for _, flag in string.split(tostring(raw), " | ") do
 		local bit = CAPABILITY_BITS[flag]
 		if bit then
-			result = result + bit
+			result += bit
 		end
 	end
 	return result
@@ -305,9 +305,9 @@ end
 local function countBits(...)
 	local Value = 0
 
-	for i, bit in next, { ... } do
+	for i, bit in { ... } do
 		if bit then
-			Value = Value + 2 ^ (i - 1)
+			Value += 2 ^ (i - 1)
 		end
 	end
 
@@ -354,16 +354,16 @@ local function classifyTable(t)
 	local len = #t
 	if len > 0 then
 		local n = 0
-		for _ in next, t do
-			n = n + 1
+		for _ in t do
+			n += 1
 		end
 		if n == len then
 			return "ValueArray"
 		end
 	end
 	local n, maxIndex = 0, 0
-	for k in next, t do
-		n = n + 1
+	for k in t do
+		n += 1
 		if type(k) == "number" and k > maxIndex and k == math.floor(k) and k >= 1 then
 			maxIndex = k
 		end
@@ -390,7 +390,7 @@ Binary_Encoders = {
 
 		if value3 ~= nil then
 			buf3, size3 = encoder(value3)
-			len = len + size3
+			len += size3
 		end
 
 		local b = buffer.create(len)
@@ -415,9 +415,9 @@ Binary_Encoders = {
 			buffer.writeu32(b, 0, n)
 
 			local offset = 4
-			for _, keypoint in next, keypoints do
+			for _, keypoint in keypoints do
 				keypoint_handler(keypoint, b, offset)
-				offset = offset + keypointSize
+				offset += keypointSize
 			end
 
 			return b, len
@@ -481,7 +481,7 @@ Binary_Encoders = {
 	["ValueArray"] = function(raw)
 		-- #raw is unreliable once holes are introduced.
 		local n = 0
-		for k in next, raw do
+		for k in raw do
 			if type(k) == "number" and k > n and k == math.floor(k) and k >= 1 then
 				n = k
 			end
@@ -492,40 +492,32 @@ Binary_Encoders = {
 		local count = 0
 
 		for i = 1, n do
-			local __DARKLUA_CONTINUE_9 = false
-			repeat
-				local value = raw[i]
-				local b, size
+			local value = raw[i]
+			local b, size
 
-				if value == nil then
-					-- Hole marker: single byte, preserves array position.
-					b = buffer.create(1)
-					buffer.writeu8(b, 0, 0x01)
-					size = 1
-				else
-					local valueTypeName = resolveTypeName(value)
-					local typeId = Attribute_Type_Ids[valueTypeName]
-					local descriptor = Binary_Encoders[valueTypeName]
-					if not descriptor then
-						__DARKLUA_CONTINUE_9 = true
-						break
-					end
-					local dataBuf, dataSize = descriptor(value)
-
-					b = buffer.create(1 + dataSize)
-					buffer.writeu8(b, 0, typeId)
-					buffer.copy(b, 1, dataBuf)
-					size = 1 + dataSize
+			if value == nil then
+				-- Hole marker: single byte, preserves array position.
+				b = buffer.create(1)
+				buffer.writeu8(b, 0, 0x01)
+				size = 1
+			else
+				local valueTypeName = resolveTypeName(value)
+				local typeId = Attribute_Type_Ids[valueTypeName]
+				local descriptor = Binary_Encoders[valueTypeName]
+				if not descriptor then
+					continue
 				end
+				local dataBuf, dataSize = descriptor(value)
 
-				count = count + 1
-				bufs[count] = b
-				total = total + size
-				__DARKLUA_CONTINUE_9 = true
-			until true
-			if not __DARKLUA_CONTINUE_9 then
-				break
+				b = buffer.create(1 + dataSize)
+				buffer.writeu8(b, 0, typeId)
+				buffer.copy(b, 1, dataBuf)
+				size = 1 + dataSize
 			end
+
+			count += 1
+			bufs[count] = b
+			total += size
 		end
 
 		local b = buffer.create(total)
@@ -535,7 +527,7 @@ Binary_Encoders = {
 		for i = 1, count do
 			local bb = bufs[i]
 			buffer.copy(b, offset, bb)
-			offset = offset + buffer.len(bb)
+			offset += buffer.len(bb)
 		end
 
 		return b, total
@@ -545,8 +537,8 @@ Binary_Encoders = {
 		local keyMap = {}
 		local n = 0
 
-		for k in next, raw do
-			n = n + 1
+		for k in raw do
+			n += 1
 			local keyStr = tostring(k)
 			keys[n] = keyStr
 			keyMap[keyStr] = k
@@ -559,37 +551,29 @@ Binary_Encoders = {
 		local count = 0
 
 		for i = 1, n do
-			local __DARKLUA_CONTINUE_12 = false
-			repeat
-				local keyStr = keys[i]
-				local value = raw[keyMap[keyStr]]
+			local keyStr = keys[i]
+			local value = raw[keyMap[keyStr]]
 
-				local valueTypeName = resolveTypeName(value)
-				local typeId = Attribute_Type_Ids[valueTypeName]
-				local descriptor = Binary_Encoders[valueTypeName]
-				if not descriptor then
-					__DARKLUA_CONTINUE_12 = true
-					break
-				end
-				local dataBuf, dataSize = descriptor(value)
-
-				local keyLen = #keyStr
-				local size = 4 + keyLen + 1 + dataSize
-				local b = buffer.create(size)
-
-				buffer.writeu32(b, 0, keyLen)
-				buffer.writestring(b, 4, keyStr)
-				buffer.writeu8(b, 4 + keyLen, typeId)
-				buffer.copy(b, 4 + keyLen + 1, dataBuf)
-
-				count = count + 1
-				bufs[count] = b
-				total = total + size
-				__DARKLUA_CONTINUE_12 = true
-			until true
-			if not __DARKLUA_CONTINUE_12 then
-				break
+			local valueTypeName = resolveTypeName(value)
+			local typeId = Attribute_Type_Ids[valueTypeName]
+			local descriptor = Binary_Encoders[valueTypeName]
+			if not descriptor then
+				continue
 			end
+			local dataBuf, dataSize = descriptor(value)
+
+			local keyLen = #keyStr
+			local size = 4 + keyLen + 1 + dataSize
+			local b = buffer.create(size)
+
+			buffer.writeu32(b, 0, keyLen)
+			buffer.writestring(b, 4, keyStr)
+			buffer.writeu8(b, 4 + keyLen, typeId)
+			buffer.copy(b, 4 + keyLen + 1, dataBuf)
+
+			count += 1
+			bufs[count] = b
+			total += size
 		end
 
 		local b = buffer.create(total)
@@ -599,7 +583,7 @@ Binary_Encoders = {
 		for i = 1, count do
 			local bb = bufs[i]
 			buffer.copy(b, offset, bb)
-			offset = offset + buffer.len(bb)
+			offset += buffer.len(bb)
 		end
 
 		return b, total
@@ -724,9 +708,9 @@ Binary_Encoders = {
 		end
 
 		buffer.writef32(b, offset, keypoint.Envelope)
-		offset = offset + 4
+		offset += 4
 		buffer.writef32(b, offset, keypoint.Time)
-		offset = offset + 4
+		offset += 4
 		buffer.writef32(b, offset, keypoint.Value)
 	end,
 	["ColorSequence"] = nil,
@@ -739,9 +723,9 @@ Binary_Encoders = {
 		end
 
 		buffer.writef32(b, offset, 0)
-		offset = offset + 4
+		offset += 4
 		buffer.writef32(b, offset, keypoint.Time)
-		offset = offset + 4
+		offset += 4
 		buffer.copy(b, offset, value)
 
 		return b, 20
@@ -915,8 +899,8 @@ XML_Encoders = {
 		return function(raw)
 			local sequence = ""
 
-			for _, keypoint in next, raw.Keypoints do
-				sequence = sequence .. keypoint_handler(keypoint)
+			for _, keypoint in raw.Keypoints do
+				sequence ..= keypoint_handler(keypoint)
 			end
 
 			return sequence
@@ -926,7 +910,7 @@ XML_Encoders = {
 		local Value = "<X>" .. X .. "</X><Y>" .. Y .. "</Y>"
 
 		if Z then
-			Value = Value .. "<Z>" .. Z .. "</Z>"
+			Value ..= "<Z>" .. Z .. "</Z>"
 		end
 
 		return Value
@@ -1239,7 +1223,6 @@ do
 end
 
 for encoderName, redirectName in
-	next,
 	{
 		NetAssetRef = "SharedString",
 		Vector2int16 = "Vector2",
@@ -1254,6 +1237,7 @@ do
 end
 
 local ClassList, FetchAPI
+
 
 do
 	local ClassPropertyExceptions = arrayToDict({
@@ -1282,33 +1266,25 @@ do
 		local formatted = table.clone(attrs)
 
 		if header_bytes then
-			buffer_size = buffer_size + #header_bytes
+			buffer_size += #header_bytes
 		end
 
-		for attr, val in next, attrs do
-			local __DARKLUA_CONTINUE_18 = false
-			repeat
-				local t = resolveTypeName(val)
+		for attr, val in attrs do
+			local t = resolveTypeName(val)
 
-				local encoder = Binary_Encoders[t]
-				if not encoder then
-					__DARKLUA_CONTINUE_18 = true
-					break
-				end
-
-				count = count + 1
-				sorted[count] = attr
-
-				local attr_size
-
-				formatted[attr], attr_size = encoder(val)
-
-				buffer_size = buffer_size + (5 + #attr + attr_size)
-				__DARKLUA_CONTINUE_18 = true
-			until true
-			if not __DARKLUA_CONTINUE_18 then
-				break
+			local encoder = Binary_Encoders[t]
+			if not encoder then
+				continue
 			end
+
+			count += 1
+			sorted[count] = attr
+
+			local attr_size
+
+			formatted[attr], attr_size = encoder(val)
+
+			buffer_size += 5 + #attr + attr_size
 		end
 
 		table.sort(sorted)
@@ -1318,29 +1294,29 @@ do
 		local offset = 0
 
 		if header_bytes then
-			for _, header_byte in next, header_bytes do
+			for _, header_byte in header_bytes do
 				buffer.writeu8(b, offset, header_byte)
-				offset = offset + 1
+				offset += 1
 			end
 		end
 
 		buffer.writeu32(b, offset, count)
-		offset = offset + 4
+		offset += 4
 
 		local stringEncoder = Binary_Encoders["string"]
-		for _, attr in next, sorted do
+		for _, attr in sorted do
 			local nameBuf, nameSize = stringEncoder(attr)
 
 			buffer.copy(b, offset, nameBuf)
-			offset = offset + nameSize
+			offset += nameSize
 
 			buffer.writeu8(b, offset, Attribute_Type_Ids[resolveTypeName(attrs[attr])])
-			offset = offset + 1
+			offset += 1
 
 			local bb = formatted[attr]
 
 			buffer.copy(b, offset, bb)
-			offset = offset + buffer.len(bb)
+			offset += buffer.len(bb)
 		end
 
 		return buffer.tostring(b)
@@ -1355,8 +1331,8 @@ do
 
 		local sorted = {}
 
-		for key in next, attenuations do
-			count = count + 1
+		for key in attenuations do
+			count += 1
 			sorted[count] = key
 		end
 
@@ -1365,11 +1341,11 @@ do
 		local b = buffer.create(1 + count * 8)
 
 		local offset = 1
-		for _, key in next, sorted do
+		for _, key in sorted do
 			buffer.writef32(b, offset, key)
-			offset = offset + 4
+			offset += 4
 			buffer.writef32(b, offset, attenuations[key])
-			offset = offset + 4
+			offset += 4
 		end
 
 		return buffer.tostring(b)
@@ -1390,24 +1366,24 @@ do
 		local _packF32 = Binary_Encoders._packF32
 
 		local offset = 8
-		for _, transform in next, transforms do
+		for _, transform in transforms do
 			local X, Y, Z, R00, R01, R02, R10, R11, R12, R20, R21, R22 = transform:GetComponents()
 
 			local xBasis = _packF32(R00, R01, R02)
 			buffer.copy(b, offset, xBasis)
-			offset = offset + 12
+			offset += 12
 
 			local yBasis = _packF32(R10, R11, R12)
 			buffer.copy(b, offset, yBasis)
-			offset = offset + 12
+			offset += 12
 
 			local zBasis = _packF32(R20, R21, R22)
 			buffer.copy(b, offset, zBasis)
-			offset = offset + 12
+			offset += 12
 
 			local position = _packF32(X, Y, Z)
 			buffer.copy(b, offset, position)
-			offset = offset + 12
+			offset += 12
 		end
 
 		return buffer.tostring(b)
@@ -1423,18 +1399,16 @@ do
 		local names = {}
 		local formatted = {}
 
-		for _, service in next, game:GetChildren() do
+		for _, service in game:GetChildren() do
 			if ExplorerServiceVisibilityService:GetServiceVisibility(service) == wantVisible then
 				local name = service.ClassName
 				local buf, size = stringEncoder(name)
 
-				count = count + 1
+				count += 1
 				names[count] = name
 				formatted[name] = buf
 
-				buffer_size = buffer_size + (
-						1 + size
-					)
+				buffer_size += 1 + size
 			end
 		end
 
@@ -1448,13 +1422,13 @@ do
 		buffer.writeu32(b, 0, count)
 
 		local offset = 4
-		for _, name in next, names do
+		for _, name in names do
 			buffer.writeu8(b, offset, typeId)
-			offset = offset + 1
+			offset += 1
 
 			local bb = formatted[name]
 			buffer.copy(b, offset, bb)
-			offset = offset + buffer.len(bb)
+			offset += buffer.len(bb)
 		end
 
 		return buffer.tostring(b)
@@ -1470,12 +1444,12 @@ do
 
 	local function writeTimesSection(b, offset, keys)
 		buffer.writeu32(b, offset, 1)
-		offset = offset + 4
+		offset += 4
 		buffer.writeu32(b, offset, #keys)
-		offset = offset + 4
-		for _, key in next, keys do
+		offset += 4
+		for _, key in keys do
 			buffer.writei32(b, offset, encodeTimeTicks(key.Time))
-			offset = offset + 4
+			offset += 4
 		end
 		return offset
 	end
@@ -1577,7 +1551,7 @@ do
 				local n = #control_points
 
 				if n == 0 then
-					return ""\0\0\0\0"
+					return "\0\0\0\0"
 				end
 
 				local b = buffer.create(4 + n * 49)
@@ -1587,14 +1561,14 @@ do
 				local encoder = Binary_Encoders["Path2DControlPoint"]
 
 				local offset = 4
-				for i, point in next, control_points do
+				for i, point in control_points do
 					local buf, bufSize = encoder(point)
 
 					buffer.writeu8(b, offset, typeId)
-					offset = offset + 1
+					offset += 1
 
 					buffer.copy(b, offset, buf)
-					offset = offset + bufSize
+					offset += bufSize
 				end
 
 				return buffer.tostring(b)
@@ -1645,7 +1619,7 @@ do
 				local props = instance:GetProperties()
 
 				if not next(props) then
-					return ""\0\0\0\0"
+					return "\0\0\0\0"
 				end
 
 				return AttributesSerialize(props)
@@ -1654,7 +1628,7 @@ do
 				local transitions = instance:GetPropertyTransitions()
 
 				if not next(transitions) then
-					return ""\2\0\0\0\0\0"
+					return "\2\0\0\0\0\0"
 				end
 
 				return AttributesSerialize(transitions, { 0x02, 0x00 })
@@ -1665,7 +1639,7 @@ do
 				local props = instance:GetConditions()
 
 				if not next(props) then
-					return ""\0\0\0\0"
+					return "\0\0\0\0"
 				end
 
 				return AttributesSerialize(props)
@@ -1677,7 +1651,7 @@ do
 				local keys = instance:GetKeys()
 
 				if #keys == 0 then
-					return ""\2\0\0\0\0\0\0\0\1\0\0\0\0\0\0\0"
+					return "\2\0\0\0\0\0\0\0\1\0\0\0\0\0\0\0"
 				end
 
 				local valuesPayloadSize = #keys * 14
@@ -1687,7 +1661,7 @@ do
 				buffer.writeu32(b, 4, #keys)
 
 				local offset = 8
-				for i, key in next, keys do
+				for i, key in keys do
 					local lt, rt = key.LeftTangent, key.RightTangent
 					local mode = countBits(lt, rt)
 
@@ -1700,15 +1674,15 @@ do
 					end
 
 					buffer.writeu8(b, offset, key.Interpolation.Value)
-					offset = offset + 1
+					offset += 1
 					buffer.writeu8(b, offset, mode)
-					offset = offset + 1
+					offset += 1
 					buffer.writef32(b, offset, key.Value)
-					offset = offset + 4
+					offset += 4
 					buffer.writef32(b, offset, lt)
-					offset = offset + 4
+					offset += 4
 					buffer.writef32(b, offset, rt)
-					offset = offset + 4
+					offset += 4
 				end
 
 				offset = writeTimesSection(b, offset, keys)
@@ -1721,7 +1695,7 @@ do
 				local keys = instance:GetKeys()
 
 				if #keys == 0 then
-					return ""\1\0\0\0\0\0\0\0\1\0\0\0\0\0\0\0"
+					return "\1\0\0\0\0\0\0\0\1\0\0\0\0\0\0\0"
 				end
 
 				local perKeySize = 1 + 16 + 4 + 4
@@ -1731,25 +1705,25 @@ do
 				buffer.writeu32(b, 4, #keys)
 
 				local offset = 8
-				for _, key in next, keys do
+				for _, key in keys do
 					local lt = key.LeftTangent or 0
 					local rt = key.RightTangent or 0
 					local qx, qy, qz, qw = cframeToQuaternion(key.Value)
 
 					buffer.writeu8(b, offset, 12 + key.Interpolation.Value)
-					offset = offset + 1
+					offset += 1
 					buffer.writef32(b, offset, qx)
-					offset = offset + 4
+					offset += 4
 					buffer.writef32(b, offset, qy)
-					offset = offset + 4
+					offset += 4
 					buffer.writef32(b, offset, qz)
-					offset = offset + 4
+					offset += 4
 					buffer.writef32(b, offset, qw)
-					offset = offset + 4
+					offset += 4
 					buffer.writef32(b, offset, lt)
-					offset = offset + 4
+					offset += 4
 					buffer.writef32(b, offset, rt)
-					offset = offset + 4
+					offset += 4
 				end
 
 				offset = writeTimesSection(b, offset, keys)
@@ -1762,7 +1736,7 @@ do
 				local keys = instance:GetKeys()
 
 				if #keys == 0 then
-					return ""\2\0\0\0\0\0\0\0\1\0\0\0\0\0\0\0"
+					return "\2\0\0\0\0\0\0\0\1\0\0\0\0\0\0\0"
 				end
 
 				local valueTypeName = instance.ValueType
@@ -1778,7 +1752,7 @@ do
 				local encoder = Binary_Encoders[valueTypeName]
 
 				if not encoder then
-					return ""\2\0\0\0\0\0\0\0\1\0\0\0\0\0\0\0"
+					return "\2\0\0\0\0\0\0\0\1\0\0\0\0\0\0\0"
 				end
 
 				local n = #keys
@@ -1786,11 +1760,11 @@ do
 				local sizes = table.create(n)
 				local valuesPayloadSize = 0
 
-				for i, key in next, keys do
+				for i, key in keys do
 					local dataBuf, dataSize = encoder(key.Value)
 					bufs[i] = dataBuf
 					sizes[i] = dataSize
-					valuesPayloadSize = valuesPayloadSize + (1 + 1 + 4 + 1 + dataSize + 4 + 4)
+					valuesPayloadSize += 1 + 1 + 4 + 1 + dataSize + 4 + 4
 				end
 
 				local b = buffer.create(8 + valuesPayloadSize + 8 + 4 * n)
@@ -1798,20 +1772,20 @@ do
 				buffer.writeu32(b, 4, n)
 
 				local offset = 8
-				for i, key in next, keys do
+				for i, key in keys do
 					local lt, rt = key.LeftTangent, key.RightTangent
 					local dataSize = sizes[i]
 
 					buffer.writeu8(b, offset, key.Interpolation.Value)
-					offset = offset + 1
+					offset += 1
 					buffer.writeu8(b, offset, countBits(lt, rt))
-					offset = offset + 1
+					offset += 1
 					buffer.writeu32(b, offset, dataSize + 1)
-					offset = offset + 4
+					offset += 4
 					buffer.writeu8(b, offset, typeId)
-					offset = offset + 1
+					offset += 1
 					buffer.copy(b, offset, bufs[i])
-					offset = offset + dataSize
+					offset += dataSize
 
 					if lt == nil and rt == nil then
 						lt, rt = deriveTangentValueCurve(keys, i)
@@ -1822,9 +1796,9 @@ do
 					end
 
 					buffer.writef32(b, offset, lt)
-					offset = offset + 4
+					offset += 4
 					buffer.writef32(b, offset, rt)
-					offset = offset + 4
+					offset += 4
 				end
 
 				offset = writeTimesSection(b, offset, keys)
@@ -1838,12 +1812,12 @@ do
 				local n = #markers
 
 				if n == 0 then
-					return ""\2\0\0\0\0\0\0\0\1\0\0\0\0\0\0\0"
+					return "\2\0\0\0\0\0\0\0\1\0\0\0\0\0\0\0"
 				end
 
 				local strings_size = 0
-				for _, marker in next, markers do
-					strings_size = strings_size + (#marker.Value + 1)
+				for _, marker in markers do
+					strings_size += #marker.Value + 1
 				end
 
 				local b = buffer.create(8 + strings_size + 8 + (n * 4))
@@ -1852,10 +1826,11 @@ do
 				buffer.writeu32(b, 4, n)
 
 				local offset = 8
-				for _, marker in next, markers do
+				for _, marker in markers do
 					local value = marker.Value
 					buffer.writestring(b, offset, value)
-					offset = offset + (#value + 1)
+					offset += #value + 1
+					--buffer.writeu8(b, offset, 0) -- null terminator
 					--offset += 1
 				end
 
@@ -1871,13 +1846,13 @@ do
 				local n = #input_pins
 
 				if n == 0 then
-					return ""\1\0\0\0\0\0\0\0"
+					return "\1\0\0\0\0\0\0\0"
 				end
 
 				local buffer_size = 8
 
-				for _, pin in next, input_pins do
-					buffer_size = buffer_size + (4 + #pin)
+				for _, pin in input_pins do
+					buffer_size += 4 + #pin
 				end
 
 				local b = buffer.create(buffer_size)
@@ -1887,11 +1862,11 @@ do
 
 				local encoder = Binary_Encoders["string"]
 				local offset = 8
-				for _, pin in next, input_pins do
+				for _, pin in input_pins do
 					local pinBuf, pinSize = encoder(pin)
 
 					buffer.copy(b, offset, pinBuf)
-					offset = offset + pinSize
+					offset += pinSize
 				end
 
 				return buffer.tostring(b)
@@ -1917,7 +1892,7 @@ do
 				local n = #labels
 
 				if n == 0 then
-					return ""\1\0\0\0\0\0\0\0"
+					return "\1\0\0\0\0\0\0\0"
 				end
 
 				local b = buffer.create(8 + n * 4)
@@ -1927,9 +1902,9 @@ do
 
 				local offset = 8
 
-				for _, label in next, labels do
+				for _, label in labels do
 					buffer.writeu32(b, offset, label)
-					offset = offset + 4
+					offset += 4
 				end
 
 				return buffer.tostring(b)
@@ -1939,13 +1914,13 @@ do
 				local n = #names
 
 				if n == 0 then
-					return ""\1\0\0\0\0\0\0\0"
+					return "\1\0\0\0\0\0\0\0"
 				end
 
 				local buffer_size = 8
 
-				for _, name in next, names do
-					buffer_size = buffer_size + (4 + #name)
+				for _, name in names do
+					buffer_size += 4 + #name
 				end
 
 				local b = buffer.create(buffer_size)
@@ -1955,13 +1930,13 @@ do
 
 				local offset = 8
 
-				for _, name in next, names do
+				for _, name in names do
 					buffer.writeu32(b, offset, #name)
-					offset = offset + 4
+					offset += 4
 				end
-				for _, name in next, names do
+				for _, name in names do
 					buffer.writestring(b, offset, name)
-					offset = offset + #name
+					offset += #name
 				end
 
 				return buffer.tostring(b)
@@ -1971,7 +1946,7 @@ do
 				local n = #parents
 
 				if n == 0 then
-					return ""\1\0\0\0\0\0\0\0"
+					return "\1\0\0\0\0\0\0\0"
 				end
 
 				local b = buffer.create(8 + #parents * 2)
@@ -1981,9 +1956,9 @@ do
 
 				local offset = 8
 
-				for _, parent in next, parents do
+				for _, parent in parents do
 					buffer.writeu16(b, offset, parent)
-					offset = offset + 2
+					offset += 2
 				end
 
 				return buffer.tostring(b)
@@ -2013,9 +1988,9 @@ do
 				local _writeI64LE = Binary_Encoders._writeI64LE
 
 				local offset = 0
-				for _, user_id in next, userid_accesslist do
+				for _, user_id in userid_accesslist do
 					_writeI64LE(b, offset, user_id)
-					offset = offset + 8
+					offset += 8
 				end
 
 				return buffer.tostring(b)
@@ -2170,7 +2145,7 @@ do
 				end
 				local b = buffer.create(#colors * 3)
 				local offset = 0
-				for _, color in next, colors do
+				for _, color in colors do
 					buffer.writeu8(b, offset, (color.R * 255))
 					offset += 1
 					buffer.writeu8(b, offset, (color.G * 255))
@@ -2208,14 +2183,14 @@ do
 				local b = buffer.create(69)
 				local offset = 6
 
-				for _, material in next, TERRAIN_MATERIAL_COLORS do
+				for _, material in TERRAIN_MATERIAL_COLORS do
 					local color = instance:GetMaterialColor(material)
 					buffer.writeu8(b, offset, (color.R * 255))
-					offset = offset + 1
+					offset += 1
 					buffer.writeu8(b, offset, (color.G * 255))
-					offset = offset + 1
+					offset += 1
 					buffer.writeu8(b, offset, (color.B * 255))
-					offset = offset + 1
+					offset += 1
 				end
 
 				return buffer.tostring(b)
@@ -2307,7 +2282,7 @@ do
 			AccessoryBlob = function(instance)
 				local blob = {}
 
-				for _, acc in next, instance:GetAccessories(false) do
+				for _, acc in instance:GetAccessories(false) do
 					table.insert(blob, {
 						AssetId = acc.AssetId,
 						Order = acc.Order,
@@ -2320,8 +2295,8 @@ do
 			end,
 			EmotesDataInternal = function(instance)
 				local emotes_data = ""
-				for name, ids in next, instance:GetEmotes() do
-					emotes_data = emotes_data .. name .. "^" .. table.concat(ids, "^") .. "^\\"
+				for name, ids in instance:GetEmotes() do
+					emotes_data ..= name .. "^" .. table.concat(ids, "^") .. "^\\"
 				end
 				return emotes_data
 			end,
@@ -2332,7 +2307,7 @@ do
 				end
 
 				local equipped_emotes_data = ""
-				for _, emote in next, equipped_emotes do
+				for _, emote in equipped_emotes do
 					equipped_emotes_data = equipped_emotes_data .. emote.Slot .. "^" .. emote.Name .. "\\"
 				end
 				return equipped_emotes_data
@@ -2419,7 +2394,7 @@ do
 				end
 
 				local parts = table.create(n)
-				for i, group in next, registered do
+				for i, group in registered do
 					parts[i] = group.name .. "^" .. i - 1 .. "^" .. group.mask
 				end
 				return table.concat(parts, "\\")
@@ -2431,16 +2406,13 @@ do
 				local n = #collision_groups
 
 				if n == 0 then
-					return ""\1\0"
+					return "\1\0"
 				end
 
 				local buffer_size = 2
 
-				for _, group in next, collision_groups do
-					buffer_size = buffer_size
-						+ (
-							7 + #group.name
-						)
+				for _, group in collision_groups do
+					buffer_size += 7 + #group.name
 				end
 
 				local b = buffer.create(buffer_size)
@@ -2451,23 +2423,23 @@ do
 				local typeId_int32 = Attribute_Type_Ids["int32"]
 				local offset = 2
 
-				for i, group in next, collision_groups do
+				for i, group in collision_groups do
 					local name, id, mask = group.name, i - 1, group.mask
 					local name_len = #name
 
 					buffer.writeu8(b, offset, id)
-					offset = offset + 1
+					offset += 1
 
 					buffer.writeu8(b, offset, typeId_int32)
-					offset = offset + 1
+					offset += 1
 
 					buffer.writei32(b, offset, mask)
-					offset = offset + 4
+					offset += 4
 
 					buffer.writeu8(b, offset, name_len)
-					offset = offset + 1
+					offset += 1
 					buffer.writestring(b, offset, name)
-					offset = offset + name_len
+					offset += name_len
 				end
 
 				return buffer.tostring(b)
@@ -2482,8 +2454,14 @@ do
 				return ServiceVisibilitySerialize(true)
 			end,
 		},
+
+		-- EditableImage = { -- Not sure how this would be encountered as it can't be parented
+		-- 	ImageData = function(instance) -- Not sure if format is correct
+		-- 		return buffer.tostring(instance:ReadPixelsBuffer(Vector2.new(), instance.Size)) -- Vector2.zero can be set to a local to avoid repeat creations
+		-- 	end,
+		-- },
 	}
-	for _, enum_item in next, Enum.Material:GetEnumItems() do
+	for _, enum_item in Enum.Material:GetEnumItems() do
 		NotScriptableFixes.MaterialService[enum_item.Name .. "Name"] = function(instance)
 			return instance:GetBaseMaterialOverride(enum_item)
 		end
@@ -2534,8 +2512,8 @@ do
 
 				-- ! Assumes Normal dumps never include Default; Full dumps always do.
 				local function isFullDump(classes)
-					for _, class in next, classes do
-						for _, member in next, class.Members do
+					for _, class in classes do
+						for _, member in class.Members do
 							if member.MemberType == "Property" then
 								return member.Default ~= nil
 							end
@@ -2622,7 +2600,7 @@ do
 					dump = fetchFullApiDump(exact_match)
 				end
 				if not dump then
-					for _, version_hash in next, matching_versions do
+					for _, version_hash in matching_versions do
 						dump = fetchFullApiDump(version_hash)
 						if dump then
 							break
@@ -2637,7 +2615,7 @@ do
 				-- also is missing some classes like UserGameSettings, not that important though as none of them appear under DataModel
 				local classes, classes_size = {}, 1
 
-				for _, api_class in next, service.ReflectionService:GetClasses(filter) do
+				for _, api_class in service.ReflectionService:GetClasses(filter) do
 					local members, members_size = {}, 1
 					local className = api_class.Name
 
@@ -2668,7 +2646,7 @@ do
 						filter
 					)
 					if o then
-						for _, property in next, r do
+						for _, property in r do
 							local propertyName = property.Name
 
 							local valueType = property.Type
@@ -2714,13 +2692,13 @@ do
 							end
 
 							members[members_size] = member
-							members_size = members_size + 1
+							members_size += 1
 						end
 						-- else
 						-- warn("Missing", className, r)
 					end
 					classes[classes_size] = class
-					classes_size = classes_size + 1
+					classes_size += 1
 				end
 
 				return classes
@@ -2735,7 +2713,7 @@ do
 			end,
 		}
 
-		for i, fetcher in next, APIDUMP_FETCHERS do
+		for i, fetcher in APIDUMP_FETCHERS do
 			local o, r = pcall(fetcher)
 			if o and r then
 				API_Dump = r
@@ -2763,11 +2741,11 @@ do
 		local API_Dump_Decoded = API_Dump
 
 		-- First pass (prep)
-		for _, API_Class in next, API_Dump_Decoded do
+		for _, API_Class in API_Dump_Decoded do
 			local ClassName = API_Class.Name
 			local props = {}
 
-			for _, Member in next, API_Class.Members do
+			for _, Member in API_Class.Members do
 				local MemberType = Member.MemberType
 				if MemberType == "Property" or MemberType == "Function" then
 					props[Member.Name] = {
@@ -2782,7 +2760,7 @@ do
 		end
 
 		-- Second pass (actual)
-		for _, API_Class in next, API_Dump_Decoded do
+		for _, API_Class in API_Dump_Decoded do
 			local ClassProperties, ClassProperties_size = {}, 1
 			local Class = {
 				Properties = ClassProperties,
@@ -2808,7 +2786,7 @@ do
 			local ClassWhitelist, ClassBlacklist = ClassesWhitelist[ClassName], ClassesBlacklist[ClassName]
 
 			local ContentProperties
-			for _, Member in next, API_Class.Members do
+			for _, Member in API_Class.Members do
 				if Member.MemberType == "Property" then
 					local Serialization = Member.Serialization
 
@@ -2837,7 +2815,7 @@ do
 									filter
 								)
 								if o then
-									for _, property in next, properties do
+									for _, property in properties do
 										ContentProperties[property.Name] = property.Serialized
 									end
 								end
@@ -2856,7 +2834,7 @@ do
 							local Special, PreferredDescriptorName
 
 							if MemberTags then
-								for _, tag in next, MemberTags do
+								for _, tag in MemberTags do
 									if type(tag) == "table" then
 										PreferredDescriptorName = tag.PreferredDescriptorName
 										if PreferredDescriptorName and Special then
@@ -2931,7 +2909,7 @@ do
 								or accessFunc
 
 							ClassProperties[ClassProperties_size] = Property
-							ClassProperties_size = ClassProperties_size + 1
+							ClassProperties_size += 1
 
 							-- end
 						end
@@ -2974,8 +2952,8 @@ local GLOBAL_ENV = getgenv and getgenv() or _G or shared
 --- @field BytecodeTimeout number -- If the SaveBytecode run time exceeds this value it gets cancelled. Set to -1 to disable timeout. ___Default:___ 3
 --- @field DecompileJobless boolean -- Includes already decompiled code in the output. No new scripts are decompiled. ___Default:___ false
 --- @field SaveBytecode boolean -- Includes bytecode in the output. Useful if you wish to be able to decompile it yourself later. ___Default:___ false
---- .DecompileIgnore {Instance | Instance.ClassName | [Instance.ClassName] = {Instance.Name}} -- * Ignores match & it's descendants by default. To Ignore only the instance itself set the value to `= false`. Examples: "Chat", - Matches any instance with "Chat" ClassName, Players = {"MyPlayerName"} - Matches "Players" Class AND "MyPlayerName" Name ONLY, `workspace` - matches Instance by reference, `[workspace] = false` - matches Instance by reference and only ignores the instance itself and not it's descendants. ___Default:___ {TextChatService}
---- .IgnoreList {Instance | Instance.ClassName | [Instance.ClassName] = {Instance.Name}} -- Structure is similar to **@DecompileIgnore** except `= false` meaning save the instance but ignore it's descendants. ___Default:___ {CoreGui, CorePackages}
+--- .DecompileIgnore {Instance | Instance.ClassName | [Instance.ClassName] = {Instance.Name}} -- Ignores matched instances and their descendants by default. To ignore only the instance itself, set the value to `false`. Examples: `"Chat"` matches any instance with ClassName "Chat"; `Players = {"MyPlayerName"}` matches class "Players" AND name "MyPlayerName" only; `workspace` matches a specific instance by reference; `[workspace] = false` matches a specific instance by reference, ignoring only itself and not its descendants. ___Default:___ {TextChatService}
+--- .IgnoreList {Instance | Instance.ClassName | [Instance.ClassName] = {Instance.Name | false}} -- Structure mirrors **@DecompileIgnore**, except `false` means keep the instance but ignore its descendants. Supports both instance references and ClassName strings. Examples: `"CoreGui"` skips entirely; `CorePackages = false` keeps the instance but skips its descendants; `Players = {"SomePlayer"}` skips a specific named instance with specific ClassName. ___Default:___ {CoreGui, CorePackages, Packages = false}
 --- .ExtraInstances {Instance} -- If used with any invalid mode (like "invalidmode") it will only save these instances. ___Default:___ {}
 --- @field IgnoreProperties table -- Ignores properties by Name. ___Default:___ {}
 --- @field SaveCacheInterval number -- The less the value the more often it saves, but that would mean less performance due to constantly saving. ___Default:___ 0x1600 * 10
@@ -3106,7 +3084,7 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 
 		IgnoreProperties = {},
 
-		IgnoreList = { "CoreGui", "CorePackages" },
+		IgnoreList = { "CoreGui", "CorePackages", Packages = false },
 
 		ExtraInstances = {},
 		NilInstances = true,
@@ -3145,15 +3123,15 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 			"",
 			"AdvancedDragger",
 			"AnimationTrack",
-			"Breakpoints",
-			"DebuggerWatch",
+			-- "Breakpoint",
+			-- "DebuggerWatch",
 			"Dragger",
+			"Player",
 			"PlayerGui",
 			"PlayerMouse",
 			"PlayerMouse",
 			"PlayerScripts",
 			"ScreenshotHud",
-			"ScriptDebugger",
 			"StudioData",
 			"TextChatMessage",
 			"TextSource",
@@ -3199,7 +3177,7 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 
 	do
 		local function buildMap(dest, source, warnLabel)
-			for k, v in next, source do
+			for k, v in source do
 				local key = string.lower(k)
 
 				if dest[key] then
@@ -3211,7 +3189,7 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 		end
 
 		-- base options
-		for o in next, OPTIONS do
+		for o in OPTIONS do
 			local option = string.lower(o)
 			if OPTIONS_lowercase[option] then
 				warn("DUPLICATE OPTION", o)
@@ -3293,7 +3271,7 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 				OPTIONS.IsModel = true
 				CustomOptions = {}
 			else
-				for key, value in next, CustomOptions do
+				for key, value in CustomOptions do
 					local k = string.lower(key)
 
 					local option = OPTIONS_lowercase[k]
@@ -3382,7 +3360,7 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 
 		local function ignorePath(path)
 			if path then
-				for _, child in next, path:GetChildren() do
+				for _, child in path:GetChildren() do
 					local class_match = default_scripts[child.ClassName]
 					if class_match then
 						local name_match = class_match[child.Name]
@@ -3394,7 +3372,7 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 			end
 		end
 
-		ignorePath(service.StarterPlayer:FindFirstChildOfClass("StarterPlayerScripts"))
+		ignorePath(service.StarterPlayer)
 
 		local LocalPlayer = service.Players.LocalPlayer
 		if LocalPlayer then
@@ -3493,7 +3471,7 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 		local PlaceName = game.PlaceId
 
 		pcall(function()
-			PlaceName = PlaceName .. " " .. service.MarketplaceService:GetProductInfoAsync(PlaceName).Name
+			PlaceName ..= " " .. service.MarketplaceService:GetProductInfoAsync(PlaceName).Name
 		end)
 
 		local function sanitizeFileName(str)
@@ -3506,7 +3484,6 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 			end
 
 			for _, key in
-				next,
 				{
 					"IsolateLocalPlayer",
 					"IsolateLocalPlayerCharacter",
@@ -3539,7 +3516,7 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 			local temp = placename
 
 			while isfile(temp .. filetype) do
-				counter = counter + 1
+				counter += 1
 				temp = placename .. "(" .. counter .. ")"
 			end
 
@@ -3567,7 +3544,7 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 				local Children = TempRoot:GetChildren()
 				if 0 < #Children then
 					local tmp_dict = arrayToDict(tmp)
-					for _, child in next, Children do
+					for _, child in Children do
 						if not tmp_dict[child] then
 							table.insert(tmp, child)
 						end
@@ -3581,7 +3558,6 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 			local tmp_dict = arrayToDict(tmp)
 
 			for _, serviceName in
-				next,
 				{
 					"Workspace",
 					"Players",
@@ -3618,7 +3594,7 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 			-- TODO: Only save paths that lead to scripts (nothing else)
 			-- Currently saves paths along with children of each tree
 			local unique = {}
-			for _, instance in next, TempRoot:GetDescendants() do
+			for _, instance in TempRoot:GetDescendants() do
 				if isLuaSourceContainer(instance) then
 					local Parent = instance.Parent
 					while Parent and Parent ~= TempRoot do
@@ -3630,7 +3606,7 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 					end
 				end
 			end
-			for instance in next, unique do
+			for instance in unique do
 				table.insert(tmp, instance)
 			end
 		end
@@ -3655,7 +3631,6 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 		local Size
 
 		for i, unit in
-			next,
 			{
 				"B",
 				"KB",
@@ -3822,7 +3797,7 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 
 					if s then
 						if not bytecode or bytecode == "" then
-				return ""
+							return ""
 						end
 						cached = ldeccache[bytecode]
 					else
@@ -4030,7 +4005,7 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 		if Fix then
 			return Fix
 		elseif Fix == nil then
-			for class_name, fix in next, fixes do
+			for class_name, fix in fixes do
 				if instance:IsA(class_name) then
 					return fix
 				end
@@ -4065,7 +4040,7 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 		local savestr = table.concat(savebuffer)
 
 		local savestr_len = #savestr
-		totalsize = totalsize + savestr_len
+		totalsize += savestr_len
 
 		-- store chunk as-is (NO concatenation accumulation)
 		table.insert(chunks, savestr)
@@ -4084,7 +4059,7 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 		local Ref = Instance.new(className)
 		local Item = ReturnItem(Ref.ClassName, Ref)
 
-		for propertyName, val in next, properties do
+		for propertyName, val in properties do
 			local whitelisted, value, tag
 
 			-- TODO: Improve all sort of overrides & exceptions in the code (code below is awful)
@@ -4098,436 +4073,409 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 			end
 
 			if whitelisted then
-				Item = Item .. ReturnProperty(tag, propertyName, value)
+				Item ..= ReturnProperty(tag, propertyName, value)
 			end
 		end
-		Item = Item .. "</Properties>"
+		Item ..= "</Properties>"
 		return Item
 	end
 
 	local function save_hierarchy(hierarchy)
-		for _, instance in next, hierarchy do
-			local __DARKLUA_CONTINUE_87 = false
-			repeat
-				local InstanceOverride, ClassTagOverride, ClassNameOverride
+		for _, instance in hierarchy do
+			local InstanceOverride, ClassTagOverride, ClassNameOverride
 
-				if not InstanceOverride then
-					InstanceOverride = InstancesOverrides[instance]
-					if InstanceOverride then
-						ClassTagOverride = InstanceOverride.__ClassName
+			if not InstanceOverride then
+				InstanceOverride = InstancesOverrides[instance]
+				if InstanceOverride then
+					ClassTagOverride = InstanceOverride.__ClassName
+				end
+			end
+			local ClassName = instance.ClassName
+
+			local InstanceName = instance.Name
+			local SkipEntirely
+
+			if not ClassTagOverride then
+				if IgnoreNotArchivable and not instance.Archivable then
+					continue
+				end
+
+				SkipEntirely = IgnoreList[instance]
+				if SkipEntirely then
+					continue
+				end
+
+				do
+					local OnIgnoredList = IgnoreList[ClassName]
+					if OnIgnoredList ~= nil then
+						if OnIgnoredList == false then
+							SkipEntirely = false
+						elseif OnIgnoredList == true or OnIgnoredList[InstanceName] then
+							continue
+						end
 					end
 				end
-				local ClassName = instance.ClassName
 
-				local InstanceName = instance.Name
-				local SkipEntirely
+				if not DecompileIgnoring then
+					DecompileIgnoring = DecompileIgnore[instance]
 
-				if not ClassTagOverride then
-					if IgnoreNotArchivable and not instance.Archivable then
-						__DARKLUA_CONTINUE_87 = true
-						break
-					end
-
-					SkipEntirely = IgnoreList[instance]
-					if SkipEntirely then
-						__DARKLUA_CONTINUE_87 = true
-						break
-					end
-
-					do
-						local OnIgnoredList = IgnoreList[ClassName]
-						if OnIgnoredList and (OnIgnoredList == true or OnIgnoredList[InstanceName]) then
-							__DARKLUA_CONTINUE_87 = true
-							break
+					if DecompileIgnoring == nil then
+						local DecompileIgnored = DecompileIgnore[ClassName]
+						if DecompileIgnored then
+							DecompileIgnoring = DecompileIgnored == true or DecompileIgnored[InstanceName]
 						end
 					end
 
-					if not DecompileIgnoring then
-						DecompileIgnoring = DecompileIgnore[instance]
-
-						if DecompileIgnoring == nil then
-							local DecompileIgnored = DecompileIgnore[ClassName]
-							if DecompileIgnored then
-								DecompileIgnoring = DecompileIgnored == true or DecompileIgnored[InstanceName]
-							end
-						end
-
-						if DecompileIgnoring then
-							DecompileIgnoring = instance
-						elseif DecompileIgnoring == false then
-							DecompileIgnoring = 1
-						end
+					if DecompileIgnoring then
+						DecompileIgnoring = instance
+					elseif DecompileIgnoring == false then
+						DecompileIgnoring = 1
 					end
+				end
 
-					do
-						local Fix = NotCreatableFixes[ClassName]
+				do
+					local Fix = NotCreatableFixes[ClassName]
 
-						if Fix then
-							if SaveNotCreatable then
-								ClassName, InstanceOverride = Fix, replaceClassName(instance, InstanceName, ClassName)
-							else
-								__DARKLUA_CONTINUE_87 = true
-								break
-							end
+					if Fix then
+						if SaveNotCreatable then
+							ClassName, InstanceOverride = Fix, replaceClassName(instance, InstanceName, ClassName)
 						else
-							if TreatUnionsAsParts and instance:IsA("PartOperation") then
-								ClassName, InstanceOverride =
-									"Part", replaceClassName(instance, InstanceName, ClassName)
-								ClassNameOverride = "BasePart"
-							elseif not ClassList[ClassName] then
-								if __DEBUG_MODE then
-									__DEBUG_MODE("Class not Found", ClassName)
+							continue
+						end
+					else
+						if TreatUnionsAsParts and instance:IsA("PartOperation") then
+							ClassName, InstanceOverride = "Part", replaceClassName(instance, InstanceName, ClassName)
+							ClassNameOverride = "BasePart"
+						elseif not ClassList[ClassName] then
+							if __DEBUG_MODE then
+								__DEBUG_MODE("Class not Found", ClassName)
+							end
+
+							ClassTagOverride = ClassName
+							ClassName = "Folder"
+						end
+					end
+				end
+			end
+			-- ? The reason we only save .Name (and few other props in save_specific) is because
+			-- ? we can be sure this is a custom container (ex. NilInstancesFixes)
+			-- ? However, in case of NotCreatableFixes, the Instance might have Tags, Attributes etc. that can potentially be saved (even though it's a Folder)
+			if InstanceOverride and InstanceOverride.__SaveSpecific then
+				savebuffer[savebuffer_size] = save_specific(ClassName, InstanceOverride.Properties)
+				savebuffer_size += 1
+			else
+				-- local Properties =
+				savebuffer[savebuffer_size] = ReturnItem(ClassTagOverride or ClassName, instance)
+				savebuffer_size += 1
+				if not (IgnorePropertiesOfNotScriptsOnScriptsMode and not isLuaSourceContainer(instance)) then
+					local default_instance, new_def_inst
+
+					if IgnoreDefaultProperties then
+						default_instance = defaultInstances[ClassName]
+						if not default_instance then
+							local Class = ClassList[ClassName]
+							if not Class.NotCreatable then
+								-- NotCreatableFixes are exceptions to the check above meaning if we don't keep the NotCreatableFixes updated then Instance.new below might start erroring in the future potentially; HOWEVER IsPropertyModified solves this issue and no updates are really needed as NotCreatableFixes is up-to-date as of VERSION-HERE (which is when IPM gets enabled)
+								local ok, result = pcall(Instance.new, ClassName)
+
+								if ok then
+									new_def_inst = result
+
+									default_instance = {}
+
+									defaultInstances[ClassName] = default_instance
+								else
+									Class.NotCreatable = true
+									if __DEBUG_MODE then
+										__DEBUG_MODE("Failed to create default Instance", ClassName, result)
+									end
+								end
+							elseif __DEBUG_MODE then
+								__DEBUG_MODE("Unable to create default Instance (NotCreatable)", ClassName)
+							end
+						end
+					end
+
+					for _, Property in GetInheritedProps(ClassNameOverride or ClassName) do
+						local PropertyName = Property.Name
+
+						if IgnoreProperties[PropertyName] then
+							continue
+						end
+
+						local ValueType = Property.ValueType
+
+						if IgnoreSharedStrings and ValueType == "SharedString" then
+							continue
+						end
+
+						local Special, Category, Optional = Property.Special, Property.Category, Property.Optional
+						local raw
+						if
+							not (
+								ValueType == "ProtectedString"
+								and PropertyName == "Source"
+								and isLuaSourceContainer(instance)
+							)
+						then
+							raw = ReadProperty(instance, Property, PropertyName, Special, Category, Optional)
+
+							if raw == __BREAK then
+								local GHPFFailed, Fallback = Property.GHPFFailed, Property.Fallback
+								if GHPFFailed and not Fallback then
+									continue
 								end
 
-								ClassTagOverride = ClassName
-								ClassName = "Folder"
-							end
-						end
-					end
-				end
-				-- ? The reason we only save .Name (and few other props in save_specific) is because
-				-- ? we can be sure this is a custom container (ex. NilInstancesFixes)
-				-- ? However, in case of NotCreatableFixes, the Instance might have Tags, Attributes etc. that can potentially be saved (even though it's a Folder)
-				if InstanceOverride and InstanceOverride.__SaveSpecific then
-					savebuffer[savebuffer_size] = save_specific(ClassName, InstanceOverride.Properties)
-					savebuffer_size = savebuffer_size + 1
-				else
-					-- local Properties =
-					savebuffer[savebuffer_size] = ReturnItem(ClassTagOverride or ClassName, instance)
-					savebuffer_size = savebuffer_size + 1
-					if not (IgnorePropertiesOfNotScriptsOnScriptsMode and not isLuaSourceContainer(instance)) then
-						local default_instance, new_def_inst
-
-						if IgnoreDefaultProperties then
-							default_instance = defaultInstances[ClassName]
-							if not default_instance then
-								local Class = ClassList[ClassName]
-								if not Class.NotCreatable then
-									-- NotCreatableFixes are exceptions to the check above meaning if we don't keep the NotCreatableFixes updated then Instance.new below might start erroring in the future potentially; HOWEVER IsPropertyModified solves this issue and no updates are really needed as NotCreatableFixes is up-to-date as of VERSION-HERE (which is when IPM gets enabled)
-									local ok, result = pcall(Instance.new, ClassName)
+								if not GHPFFailed then
+									local ok, result = pcall(gethiddenproperty_fallback, instance, PropertyName)
+									if result == nil and not Optional then
+										ok = nil
+									end
 
 									if ok then
-										new_def_inst = result
-
-										default_instance = {}
-
-										defaultInstances[ClassName] = default_instance
+										raw = result
 									else
-										Class.NotCreatable = true
-										if __DEBUG_MODE then
-											__DEBUG_MODE("Failed to create default Instance", ClassName, result)
-										end
+										GHPFFailed = true
+										Property.GHPFFailed = GHPFFailed
 									end
-								elseif __DEBUG_MODE then
-									__DEBUG_MODE("Unable to create default Instance (NotCreatable)", ClassName)
 								end
+
+								if GHPFFailed and Fallback then
+									local ok, result = pcall(Fallback, instance)
+
+									if ok then
+										raw = result
+									else
+										Property.Fallback = nil
+										if __DEBUG_MODE then
+											__DEBUG_MODE("Fix Failed", PropertyName, result)
+										end
+										continue
+									end
+								end
+
+								if raw == __BREAK then
+									continue
+								end
+							end
+
+							-- Special = Property.Special -- ? Read TODO below (must be updated if it's used frequently afterwards)
+
+							if
+								default_instance
+								and Property.CanRead
+								and not Property.Special
+							then
+								if new_def_inst then
+									default_instance[PropertyName] = index(new_def_inst, PropertyName)
+								end
+								if default_instance[PropertyName] == raw then
+									continue
+								end
+							end
+
+							-- if PropertyName == "AttributesSerialize" and raw ~= "" then -- TODO unreleased yet
+							-- 	for name, v in instance:GetAttributes() do
+							-- 		if typeof(v) == "InstanceHandle" then
+							-- 			savebuffer[savebuffer_size] =
+							-- 				ReturnProperty("Ref", "__attrRef_" .. name, getRef(v))
+							-- 			savebuffer_size += 1
+							-- 		end
+							-- 	end
+							-- end
+						end
+						-- Serialization start
+
+						if SharedStringOverwrite and ValueType == "BinaryString" then
+							ValueType = "SharedString"
+						end
+
+						if AnonymizableTypes and AnonymizableTypes[ValueType] then
+							-- TODO This might cause issues on non-unique Usernames (ex. "Cake" if game is about cakes then everything supposedly related to your name will be replaced with "Roblox"); Certain UserIds might also affect numbers, like if your UserId is 2481848 and there is some number that matches 2481848 then that number will be replaced with 1, potentially making the number incorrect.
+							-- TODO So for now it's best to keep this disabled by default
+
+							if ValueType == "string" then
+								raw = gsubCaseInsensitive(raw, LP_Name, ANON_Name)
+							elseif raw == LP_UserId then
+								raw = ANON_UserId
 							end
 						end
 
-						for _, Property in next, GetInheritedProps(ClassNameOverride or ClassName) do
-							local __DARKLUA_CONTINUE_88 = false
-							repeat
-								local PropertyName = Property.Name
-
-								if IgnoreProperties[PropertyName] then
-									__DARKLUA_CONTINUE_88 = true
-									break
-								end
-
-								local ValueType = Property.ValueType
-
-								if IgnoreSharedStrings and ValueType == "SharedString" then
-									__DARKLUA_CONTINUE_88 = true
-									break
-								end
-
-								local Special, Category, Optional =
-									Property.Special, Property.Category, Property.Optional
-								local raw
-								if
-									not (
-										ValueType == "ProtectedString"
-										and PropertyName == "Source"
-										and isLuaSourceContainer(instance)
-									)
-								then
-									raw = ReadProperty(instance, Property, PropertyName, Special, Category, Optional)
-
-									if raw == __BREAK then
-										local GHPFFailed, Fallback = Property.GHPFFailed, Property.Fallback
-										if GHPFFailed and not Fallback then
-											__DARKLUA_CONTINUE_88 = true
-											break
-										end
-
-										if not GHPFFailed then
-											local ok, result = pcall(gethiddenproperty_fallback, instance, PropertyName)
-											if result == nil and not Optional then
-												ok = nil
-											end
-
-											if ok then
-												raw = result
-											else
-												GHPFFailed = true
-												Property.GHPFFailed = GHPFFailed
-											end
-										end
-
-										if GHPFFailed and Fallback then
-											local ok, result = pcall(Fallback, instance)
-
-											if ok then
-												raw = result
-											else
-												Property.Fallback = nil
-												if __DEBUG_MODE then
-													__DEBUG_MODE("Fix Failed", PropertyName, result)
-												end
-												__DARKLUA_CONTINUE_88 = true
-												break
-											end
-										end
-
-										if raw == __BREAK then
-											__DARKLUA_CONTINUE_88 = true
-											break
-										end
-									end
-
-									-- Special = Property.Special -- ? Read TODO below (must be updated if it's used frequently afterwards)
-
+						local tag, value
+						if Category == "Class" then
+							tag = "Ref"
+							if raw then
+								if SaveNotCreatableWillBeEnabled then
+									local Fix = NotCreatableFixes[raw.ClassName]
 									if
-										default_instance
-										and Property.CanRead
-										and not Property.Special
+										Fix
+										and (
+											PropertyName == "PlayerToHideFrom"
+											or ValueType ~= "Instance" and ValueType ~= Fix
+										)
 									then
-										if new_def_inst then
-											default_instance[PropertyName] = index(new_def_inst, PropertyName)
-										end
-										if default_instance[PropertyName] == raw then
-											__DARKLUA_CONTINUE_88 = true
-											break
-										end
-									end
-
-									-- if PropertyName == "AttributesSerialize" and raw ~= "" then -- TODO unreleased yet
-									-- 	for name, v in instance:GetAttributes() do
-									-- 		if typeof(v) == "InstanceHandle" then
-									-- 			savebuffer[savebuffer_size] =
-									-- 				ReturnProperty("Ref", "__attrRef_" .. name, getRef(v))
-									-- 			savebuffer_size += 1
-									-- 		end
-									-- 	end
-									-- end
-								end
-								-- Serialization start
-
-								if SharedStringOverwrite and ValueType == "BinaryString" then
-									ValueType = "SharedString"
-								end
-
-								if AnonymizableTypes and AnonymizableTypes[ValueType] then
-									-- TODO This might cause issues on non-unique Usernames (ex. "Cake" if game is about cakes then everything supposedly related to your name will be replaced with "Roblox"); Certain UserIds might also affect numbers, like if your UserId is 2481848 and there is some number that matches 2481848 then that number will be replaced with 1, potentially making the number incorrect.
-									-- TODO So for now it's best to keep this disabled by default
-
-									if ValueType == "string" then
-										raw = gsubCaseInsensitive(raw, LP_Name, ANON_Name)
-									elseif raw == LP_UserId then
-										raw = ANON_UserId
+										continue
 									end
 								end
 
-								local tag, value
-								if Category == "Class" then
-									tag = "Ref"
-									if raw then
-										if SaveNotCreatableWillBeEnabled then
-											local Fix = NotCreatableFixes[raw.ClassName]
-											if
-												Fix
-												and (
-													PropertyName == "PlayerToHideFrom"
-													or ValueType ~= "Instance" and ValueType ~= Fix
+								value = getRef(raw)
+							else
+								value = "null"
+							end
+						elseif Category == "Enum" then
+							value, tag = XML_Encoders.EnumItem(raw)
+						else
+							local encoder = XML_Encoders[ValueType]
+
+							if encoder then
+								value, tag = ReturnValueAndTag(raw, ValueType, encoder)
+							elseif ValueType == "ProtectedString" then
+								tag = ValueType
+
+								if PropertyName == "Source" then
+									if DecompileIgnoring then
+										if DecompileIgnoring == 1 then
+											DecompileIgnoring = nil
+										end
+										value = ""
+									else
+										local should_decompile = true
+										local LinkedSource
+										local o, LinkedSource_Url = pcall(index, instance, "LinkedSource")
+										if not o then
+											LinkedSource_Url = ""
+										end
+										local hasLinkedSource = LinkedSource_Url ~= ""
+										local LinkedSource_type
+										if hasLinkedSource then
+											local Path = instance:GetFullName()
+											if RecoveredScripts then
+												table.insert(RecoveredScripts, Path)
+											end
+
+											LinkedSource = string.match(LinkedSource_Url, "%w+$")
+											if LinkedSource then
+												if ScriptCache then
+													local cached = ldeccache[LinkedSource]
+
+													if cached then
+														value = cached
+														should_decompile = nil
+													end
+												end
+												if should_decompile then
+													if DecompileJobless then
+														value = ""
+														should_decompile = nil
+													end
+
+													LinkedSource_type = string.find(LinkedSource, "%a") and "hash"
+														or "id"
+
+													local asset = LinkedSource_type .. "=" .. LinkedSource
+
+													local ok, source = pcall(function()
+														-- Credits @halffalse
+														return game:HttpGet(
+															"https://assetdelivery.roproxy.com/v1/asset/?" .. asset
+														)
+													end)
+
+													if ok and filterLinkedSource(source) then
+														if ScriptCache then
+															ldeccache[LinkedSource] = source
+														end
+
+														value = source
+
+														should_decompile = nil
+													end
+												end
+											else
+												warn(
+													"FAILED TO EXTRACT ORIGINAL SCRIPT SOURCE (OPEN A GITHUB ISSUE): ",
+													instance:GetFullName(),
+													LinkedSource_Url
 												)
-											then
-												__DARKLUA_CONTINUE_88 = true
-												break
 											end
 										end
 
-										value = getRef(raw)
-									else
-										value = "null"
+										if should_decompile then
+											local isLocalScript = instance:IsA("LocalScript")
+											if
+												isLocalScript and instance.RunContext == Enum.RunContext.Server
+												or not isLocalScript
+													and instance:IsA("Script")
+													and instance.RunContext ~= Enum.RunContext.Client
+											then
+												value = ""
+											else
+												value = ldecompile(instance)
+												if SaveBytecode then
+													local output = SaveBytecode(instance)
+													if output then
+														value = output .. value
+													end
+												end
+											end
+										end
+
+										value = ""
+											.. (hasLinkedSource and "")
+											.. value
 									end
-								elseif Category == "Enum" then
-									value, tag = XML_Encoders.EnumItem(raw)
-								else
-									local encoder = XML_Encoders[ValueType]
+								end
+								value = XML_Encoders._protectedString(value)
+							else
+								--OptionalCoordinateFrame and so on, we make it dynamic
+
+								if Optional then
+									encoder = XML_Encoders[Optional]
 
 									if encoder then
-										value, tag = ReturnValueAndTag(raw, ValueType, encoder)
-									elseif ValueType == "ProtectedString" then
-										tag = ValueType
-
-										if PropertyName == "Source" then
-											if DecompileIgnoring then
-												if DecompileIgnoring == 1 then
-													DecompileIgnoring = nil
-												end
-												value = ""
-											else
-												local should_decompile = true
-												local LinkedSource
-												local o, LinkedSource_Url = pcall(index, instance, "LinkedSource")
-												if not o then
-													LinkedSource_Url = ""
-												end
-												local hasLinkedSource = LinkedSource_Url ~= ""
-												local LinkedSource_type
-												if hasLinkedSource then
-													local Path = instance:GetFullName()
-													if RecoveredScripts then
-														table.insert(RecoveredScripts, Path)
-													end
-
-													LinkedSource = string.match(LinkedSource_Url, "%w+$")
-													if LinkedSource then
-														if ScriptCache then
-															local cached = ldeccache[LinkedSource]
-
-															if cached then
-																value = cached
-																should_decompile = nil
-															end
-														end
-														if should_decompile then
-															if DecompileJobless then
-																value = ""
-																should_decompile = nil
-															end
-
-															LinkedSource_type = string.find(LinkedSource, "%a")
-																	and "hash"
-																or "id"
-
-															local asset = LinkedSource_type .. "=" .. LinkedSource
-
-															local ok, source = pcall(function()
-																-- Credits @halffalse
-																return game:HttpGet(
-																	"https://assetdelivery.roproxy.com/v1/asset/?"
-																		.. asset
-																)
-															end)
-
-															if ok and filterLinkedSource(source) then
-																if ScriptCache then
-																	ldeccache[LinkedSource] = source
-																end
-
-																value = source
-
-																should_decompile = nil
-															end
-														end
-													else
-														warn(
-															"FAILED TO EXTRACT ORIGINAL SCRIPT SOURCE (OPEN A GITHUB ISSUE): ",
-															instance:GetFullName(),
-															LinkedSource_Url
-														)
-													end
-												end
-
-												if should_decompile then
-													local isLocalScript = instance:IsA("LocalScript")
-													if
-														isLocalScript
-															and instance.RunContext == Enum.RunContext.Server
-														or not isLocalScript
-															and instance:IsA("Script")
-															and instance.RunContext ~= Enum.RunContext.Client
-													then
-														value =
-															"
-													else
-														value = ldecompile(instance)
-														if SaveBytecode then
-															local output = SaveBytecode(instance)
-															if output then
-																value = output .. value
-															end
-														end
-													end
-												end
-
-												value = ""
-													.. (hasLinkedSource and "")
-													.. value
-											end
-										end
-										value = XML_Encoders._protectedString(value)
-									else
-										--OptionalCoordinateFrame and so on, we make it dynamic
-
-										if Optional then
-											encoder = XML_Encoders[Optional]
-
-											if encoder then
-												if raw == nil then
-													__DARKLUA_CONTINUE_88 = true
-													-- ? Though why even save it if it's empty considering it's optional
-													break
-												-- value, tag = "", ValueType
-												else
-													value, tag = ReturnValueAndTag(raw, ValueType, encoder)
-												end
-											end
+										if raw == nil then
+											-- * It can be empty, because it's optional
+											-- ? Though why even save it if it's empty considering it's optional
+											continue
+										-- value, tag = "", ValueType
+										else
+											value, tag = ReturnValueAndTag(raw, ValueType, encoder)
 										end
 									end
 								end
-
-								if tag then
-									savebuffer[savebuffer_size] = ReturnProperty(tag, PropertyName, value)
-									savebuffer_size = savebuffer_size + 1
-								else
-									warn("UNSUPPORTED TYPE (OPEN A GITHUB ISSUE): ", ValueType, ClassName, PropertyName)
-								end
-								__DARKLUA_CONTINUE_88 = true
-							until true
-							if not __DARKLUA_CONTINUE_88 then
-								break
 							end
 						end
-					end
-					savebuffer[savebuffer_size] = "</Properties>"
-					savebuffer_size = savebuffer_size + 1
 
-					if SaveCacheInterval < savebuffer_size then
-						save_cache()
-					end
-				end
-
-				if SkipEntirely ~= false then
-					local Children = InstanceOverride and InstanceOverride.__Children or instance:GetChildren()
-
-					if #Children ~= 0 then
-						save_hierarchy(Children)
+						if tag then
+							savebuffer[savebuffer_size] = ReturnProperty(tag, PropertyName, value)
+							savebuffer_size += 1
+						else
+							warn("UNSUPPORTED TYPE (OPEN A GITHUB ISSUE): ", ValueType, ClassName, PropertyName)
+						end
 					end
 				end
+				savebuffer[savebuffer_size] = "</Properties>"
+				savebuffer_size += 1
 
-				if DecompileIgnoring and DecompileIgnoring == instance then
-					DecompileIgnoring = nil
+				if SaveCacheInterval < savebuffer_size then
+					save_cache()
 				end
-
-				savebuffer[savebuffer_size] = "</Item>"
-				savebuffer_size = savebuffer_size + 1
-				__DARKLUA_CONTINUE_87 = true
-			until true
-			if not __DARKLUA_CONTINUE_87 then
-				break
 			end
+
+			if SkipEntirely ~= false then
+				local Children = InstanceOverride and InstanceOverride.__Children or instance:GetChildren()
+
+				if #Children ~= 0 then
+					save_hierarchy(Children)
+				end
+			end
+
+			if DecompileIgnoring and DecompileIgnoring == instance then
+				DecompileIgnoring = nil
+			end
+
+			savebuffer[savebuffer_size] = "</Item>"
+			savebuffer_size += 1
 		end
 	end
 
@@ -4561,12 +4509,12 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 
 		if not saveProps then
 			savebuffer[savebuffer_size] = save_specific(customClassName, properties)
-			savebuffer_size = savebuffer_size + 1
+			savebuffer_size += 1
 			if hierarchy then
 				save_hierarchy(hierarchy)
 			end
 			savebuffer[savebuffer_size] = "</Item>"
-			savebuffer_size = savebuffer_size + 1
+			savebuffer_size += 1
 		end
 	end
 
@@ -4578,7 +4526,7 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 			Also http can be converted to https but not sure if Roblox cares
 			-- ? <External>null</External><External>nil</External>  - <External> is a legacy concept that is no longer used.
 		]]
-				header = header .. '<Meta name="ExplicitAutoJoints">true</Meta>'
+				header ..= '<Meta name="ExplicitAutoJoints">true</Meta>'
 			end
 			if writefile and not OPTIONS.Callback then
 				writefile(placename, header)
@@ -4624,7 +4572,7 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 
 			local NilInstancesFixes = OPTIONS.NilInstancesFixes
 
-			for _, instance in next, global_container.getnilinstances() do
+			for _, instance in global_container.getnilinstances() do
 				if instance == game then
 					instance = nil
 					-- break
@@ -4649,7 +4597,7 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 				end
 				if instance then
 					nil_instances[nil_instances_size] = instance
-					nil_instances_size = nil_instances_size + 1
+					nil_instances_size += 1
 				end
 			end
 			SaveNotCreatable = true
@@ -4658,21 +4606,21 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 
 	do
 		local tmp = { "<SharedStrings>" }
-			for value, id in next, sharedStrings do
+			for value, id in sharedStrings do
 				table.insert(tmp, '<SharedString md5="' .. id .. '">' .. value .. "</SharedString>")
 			end
 
 			if 1 < #tmp then
 				savebuffer[savebuffer_size] = table.concat(tmp)
-				savebuffer_size = savebuffer_size + 1
+				savebuffer_size += 1
 				savebuffer[savebuffer_size] = "</SharedStrings>"
-				savebuffer_size = savebuffer_size + 1
+				savebuffer_size += 1
 			end
 		end
 
 		savebuffer[savebuffer_size] =
 			"</roblox><!-- Decompiled By KkSaiko -->"
-		savebuffer_size = savebuffer_size + 1
+		savebuffer_size += 1
 		save_cache()
 		do
 			local function buildFinalString(chunks)
@@ -4690,13 +4638,13 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 			elseif OPTIONS.AlternativeWritefile and appendfile then
 				local SEGMENT_SIZE = 4145728
 				local totallen = 0
-				for _, chunk in next, chunks do
-					totallen = totallen + math.ceil(#chunk / SEGMENT_SIZE)
+				for _, chunk in chunks do
+					totallen += math.ceil(#chunk / SEGMENT_SIZE)
 				end
 
 				local currentlen = 0
 
-				for _, chunk in next, chunks do
+				for _, chunk in chunks do
 					local chunk_len = #chunk
 					local offset = 1
 
@@ -4712,8 +4660,8 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 							savestr
 						)
 
-						currentlen = currentlen + 1
-						offset = offset + SEGMENT_SIZE
+						currentlen += 1
+						offset += SEGMENT_SIZE
 
 						if offset <= chunk_len then
 							task.wait()
@@ -4738,7 +4686,7 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 		table.insert(Connections, event:Connect(func))
 	end
 	local function Cleanup()
-		for _, connection in next, Connections do
+		for _, connection in Connections do
 			connection:Disconnect()
 		end
 		GLOBAL_ENV[placename] = nil
@@ -4763,7 +4711,7 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 					ignoreCharacter(player)
 				end)
 
-				for _, player in next, Players:GetPlayers() do
+				for _, player in Players:GetPlayers() do
 					ignoreCharacter(player)
 				end
 			else
@@ -4799,7 +4747,7 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 					return
 				end
 
-				for _, v in next, table.clone(f()) do
+				for _, v in table.clone(f()) do
 					if not done[v] then
 						done[v] = true
 
@@ -4911,7 +4859,7 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 					InstancesOverrides[instance] = {
 						__Children = children,
 					}
-					for _, child in next, children do
+					for _, child in children do
 						makeInstanceOverride(child)
 					end
 				end
@@ -4972,7 +4920,7 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 				end
 				local function benchmark(funcs, ...)
 					local ranking = table.create(2)
-					for i, f in next, funcs do
+					for i, f in funcs do
 						local start = os.clock()
 						for _ = 1, 50 do
 							f(...)
