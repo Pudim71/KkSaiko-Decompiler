@@ -358,7 +358,7 @@ local function classifyTable(t)
 			n += 1
 		end
 		if n == len then
-			return ""ValueArray"
+			return "ValueArray"
 		end
 	end
 	local n, maxIndex = 0, 0
@@ -877,11 +877,11 @@ XML_Encoders = {
 	end,
 	_normalizeNumber = function(raw)
 		if raw ~= raw then
-			return ""NAN"
+			return "NAN"
 		elseif raw == math.huge then
-			return ""INF"
+			return "INF"
 		elseif raw == -math.huge then
-			return ""-INF"
+			return "-INF"
 		end
 
 		return raw
@@ -1324,7 +1324,7 @@ do
 
 	local function AttenuationSerialize(attenuations)
 		if not next(attenuations) then
-			return ""\0"
+			return "\0"
 		end
 
 		local count = 0
@@ -1355,7 +1355,7 @@ do
 		local n = #transforms
 
 		if n == 0 then
-			return ""\1\0\0\0\0\0\0\0"
+			return "\1\0\0\0\0\0\0\0"
 		end
 
 		local b = buffer.create(8 + n * 48)
@@ -1413,7 +1413,7 @@ do
 		end
 
 		if count == 0 then
-			return ""\0\0\0\0"
+			return "\0\0\0\0"
 		end
 
 		table.sort(names)
@@ -1551,7 +1551,7 @@ do
 				local n = #control_points
 
 				if n == 0 then
-					return ""\0\0\0\0"
+					return "\0\0\0\0"
 				end
 
 				local b = buffer.create(4 + n * 49)
@@ -1580,7 +1580,7 @@ do
 		-- 		local n = #control_points
 
 		-- 		if n == 0 then
-		-- 			return ""\0\0\0\0"
+		-- 			return "\0\0\0\0"
 		-- 		end
 
 		-- 		local b = buffer.create(4 + n * 49)
@@ -1619,7 +1619,7 @@ do
 				local props = instance:GetProperties()
 
 				if not next(props) then
-					return ""\0\0\0\0"
+					return "\0\0\0\0"
 				end
 
 				return AttributesSerialize(props)
@@ -1628,7 +1628,7 @@ do
 				local transitions = instance:GetPropertyTransitions()
 
 				if not next(transitions) then
-					return ""\2\0\0\0\0\0"
+					return "\2\0\0\0\0\0"
 				end
 
 				return AttributesSerialize(transitions, { 0x02, 0x00 })
@@ -1639,7 +1639,7 @@ do
 				local props = instance:GetConditions()
 
 				if not next(props) then
-					return ""\0\0\0\0"
+					return "\0\0\0\0"
 				end
 
 				return AttributesSerialize(props)
@@ -1651,7 +1651,7 @@ do
 				local keys = instance:GetKeys()
 
 				if #keys == 0 then
-					return ""\2\0\0\0\0\0\0\0\1\0\0\0\0\0\0\0"
+					return "\2\0\0\0\0\0\0\0\1\0\0\0\0\0\0\0"
 				end
 
 				local valuesPayloadSize = #keys * 14
@@ -1695,7 +1695,7 @@ do
 				local keys = instance:GetKeys()
 
 				if #keys == 0 then
-					return ""\1\0\0\0\0\0\0\0\1\0\0\0\0\0\0\0"
+					return "\1\0\0\0\0\0\0\0\1\0\0\0\0\0\0\0"
 				end
 
 				local perKeySize = 1 + 16 + 4 + 4
@@ -1736,7 +1736,7 @@ do
 				local keys = instance:GetKeys()
 
 				if #keys == 0 then
-					return ""\2\0\0\0\0\0\0\0\1\0\0\0\0\0\0\0"
+					return "\2\0\0\0\0\0\0\0\1\0\0\0\0\0\0\0"
 				end
 
 				local valueTypeName = instance.ValueType
@@ -1752,7 +1752,7 @@ do
 				local encoder = Binary_Encoders[valueTypeName]
 
 				if not encoder then
-					return ""\2\0\0\0\0\0\0\0\1\0\0\0\0\0\0\0"
+					return "\2\0\0\0\0\0\0\0\1\0\0\0\0\0\0\0"
 				end
 
 				local n = #keys
@@ -1812,7 +1812,7 @@ do
 				local n = #markers
 
 				if n == 0 then
-					return ""\2\0\0\0\0\0\0\0\1\0\0\0\0\0\0\0"
+					return "\2\0\0\0\0\0\0\0\1\0\0\0\0\0\0\0"
 				end
 
 				local strings_size = 0
@@ -1846,7 +1846,7 @@ do
 				local n = #input_pins
 
 				if n == 0 then
-					return ""\1\0\0\0\0\0\0\0"
+					return "\1\0\0\0\0\0\0\0"
 				end
 
 				local buffer_size = 8
@@ -1892,7 +1892,7 @@ do
 				local n = #labels
 
 				if n == 0 then
-					return ""\1\0\0\0\0\0\0\0"
+					return "\1\0\0\0\0\0\0\0"
 				end
 
 				local b = buffer.create(8 + n * 4)
@@ -1914,7 +1914,7 @@ do
 				local n = #names
 
 				if n == 0 then
-					return ""\1\0\0\0\0\0\0\0"
+					return "\1\0\0\0\0\0\0\0"
 				end
 
 				local buffer_size = 8
@@ -1946,7 +1946,7 @@ do
 				local n = #parents
 
 				if n == 0 then
-					return ""\1\0\0\0\0\0\0\0"
+					return "\1\0\0\0\0\0\0\0"
 				end
 
 				local b = buffer.create(8 + #parents * 2)
@@ -2406,7 +2406,7 @@ do
 				local n = #collision_groups
 
 				if n == 0 then
-					return ""\1\0"
+					return "\1\0"
 				end
 
 				local buffer_size = 2
