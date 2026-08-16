@@ -1,4 +1,4 @@
-local function string_find(s, pattern, init)
+﻿local function string_find(s, pattern, init)
 	return string.find(s, pattern, init, true)
 end
 
