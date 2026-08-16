@@ -4440,9 +4440,9 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 													end
 												end
 
-												value = ""
-													.. (hasLinkedSource and "")
-													.. value
+value = ""
+    .. (hasLinkedSource and "" or "")
+    .. value
 											end
 										end
 										value = XML_Encoders._protectedString(value)
