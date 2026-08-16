@@ -1,4 +1,4 @@
-﻿--!native
+--!native
 --!optimize 2
 --!divine-intellect
 -- Decompiled By KkSaiko
@@ -1553,7 +1553,7 @@ do
 				local attrs = instance:GetAttributes()
 
 				if not next(attrs) then
-					return """
+					return ""
 				end
 
 				return AttributesSerialize(attrs)
@@ -1565,7 +1565,7 @@ do
 				local tags = service.CollectionService:GetTags(instance)
 
 				if #tags == 0 then
-					return """
+					return ""
 				end
 
 				return table.concat(tags, "\0")
@@ -1634,7 +1634,7 @@ do
 				local EmulatedPolicyInfo = instance:GetEmulatedPolicyInfo()
 
 				if not next(EmulatedPolicyInfo) then
-					return """
+					return ""
 				end
 
 				return AttributesSerialize(EmulatedPolicyInfo)
@@ -2005,7 +2005,7 @@ do
 				local n = #userid_accesslist
 
 				if n == 0 then
-					return """
+					return ""
 				end
 
 				local b = buffer.create(n * 8)
@@ -2328,7 +2328,7 @@ do
 			EquippedEmotesDataInternal = function(instance)
 				local equipped_emotes = instance:GetEquippedEmotes()
 				if #equipped_emotes == 0 then
-					return """
+					return ""
 				end
 
 				local equipped_emotes_data = ""
@@ -2415,7 +2415,7 @@ do
 
 				local n = #registered
 				if n == 0 then
-					return """
+					return ""
 				end
 
 				local parts = table.create(n)
@@ -3822,7 +3822,7 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 
 					if s then
 						if not bytecode or bytecode == "" then
-				return """
+				return ""
 						end
 						cached = ldeccache[bytecode]
 					else
