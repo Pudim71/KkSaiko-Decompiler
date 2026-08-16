@@ -1,4 +1,4 @@
-﻿--!native
+--!native
 --!optimize 2
 --!divine-intellect
 -- Decompiled By KkSaiko
@@ -1238,6 +1238,7 @@ end
 
 local ClassList, FetchAPI
 
+
 do
 	local ClassPropertyExceptions = arrayToDict({
 		Whitelist = {
@@ -1526,7 +1527,7 @@ do
 				local attrs = instance:GetAttributes()
 
 				if not next(attrs) then
-					return """
+					return ""
 				end
 
 				return AttributesSerialize(attrs)
@@ -1538,7 +1539,7 @@ do
 				local tags = service.CollectionService:GetTags(instance)
 
 				if #tags == 0 then
-					return """
+					return ""
 				end
 
 				return table.concat(tags, "\0")
@@ -1607,7 +1608,7 @@ do
 				local EmulatedPolicyInfo = instance:GetEmulatedPolicyInfo()
 
 				if not next(EmulatedPolicyInfo) then
-					return """
+					return ""
 				end
 
 				return AttributesSerialize(EmulatedPolicyInfo)
@@ -1979,7 +1980,7 @@ do
 				local n = #userid_accesslist
 
 				if n == 0 then
-					return """
+					return ""
 				end
 
 				local b = buffer.create(n * 8)
@@ -2015,7 +2016,7 @@ do
 		-- 	AuroraScriptBindingsSerialize = function(instance)
 		-- 		local bindings = service.AuroraScriptService:getInstancesForBehavior(instance)
 		-- 		if #bindings == 0 then
-		-- 			return """
+		-- 			return ""
 		-- 		end
 		-- 		local refs = table.create(#bindings)
 		-- 		for i, binding in bindings do
@@ -2302,7 +2303,7 @@ do
 			EquippedEmotesDataInternal = function(instance)
 				local equipped_emotes = instance:GetEquippedEmotes()
 				if #equipped_emotes == 0 then
-					return """
+					return ""
 				end
 
 				local equipped_emotes_data = ""
@@ -2389,7 +2390,7 @@ do
 
 				local n = #registered
 				if n == 0 then
-					return """
+					return ""
 				end
 
 				local parts = table.create(n)
@@ -4364,7 +4365,7 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 												end
 												if should_decompile then
 													if DecompileJobless then
-														value = """
+														value = ""
 														should_decompile = nil
 													end
 
@@ -4407,7 +4408,7 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 													and instance:IsA("Script")
 													and instance.RunContext ~= Enum.RunContext.Client
 											then
-												value = """
+												value = ""
 											else
 												value = ldecompile(instance)
 												if SaveBytecode then
