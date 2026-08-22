@@ -2620,7 +2620,7 @@ local totalsize, chunks = 0, table.create(1)
 		IgnoreList = { "CoreGui", "CorePackages" },
 
 		ExtraInstances = {},
-		NilInstances = false,
+		NilInstances = true,
 		NilInstancesFixes = {},
 
 		SaveCacheInterval = 0x1600 * 10,
