@@ -2620,7 +2620,7 @@ local totalsize, chunks = 0, table.create(1)
 		IgnoreList = { "CoreGui", "CorePackages" },
 
 		ExtraInstances = {},
-		NilInstances = true,
+		NilInstances = false,
 		NilInstancesFixes = {},
 
 		SaveCacheInterval = 0x1600 * 10,
@@ -2644,7 +2644,7 @@ local totalsize, chunks = 0, table.create(1)
 
 		IsolateLocalPlayer = false,
 		IsolateLocalPlayerCharacter = false,
-		IsolatePlayers = false,
+		IsolatePlayers = true,
 		IsolateStarterPlayer = false,
 		SavePlayerCharacters = false,
 
