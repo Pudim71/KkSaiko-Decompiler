@@ -4194,11 +4194,6 @@ value = "-- Decompiled By KkSaiko\n"
 				end
 			end
 		end
-		if IsolateLocalPlayer and IgnoreList.Player ~= true then
-			task.spawn(function()
-				IgnoreList[GetLocalPlayer()] = true
-			end)
-		end
 	end
 
 	if OPTIONS.KillAllScripts and not GLOBAL_ENV.USSI_KAS then
