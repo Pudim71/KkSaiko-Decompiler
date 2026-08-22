@@ -2644,7 +2644,7 @@ local totalsize, chunks = 0, table.create(1)
 
 		IsolateLocalPlayer = true,
 		IsolateLocalPlayerCharacter = false,
-		IsolatePlayers = false,
+		IsolatePlayers = true,
 		IsolateStarterPlayer = false,
 		SavePlayerCharacters = false,
 
