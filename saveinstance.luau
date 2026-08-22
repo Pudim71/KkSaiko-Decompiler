@@ -2642,9 +2642,9 @@ local totalsize, chunks = 0, table.create(1)
 		IgnorePropertiesOfNotScriptsOnScriptsMode = false,
 		IgnoreSpecialProperties = arrayToDict({ "Fluxus", "Delta", "Solara" })[EXECUTOR_NAME] or false,
 
-		IsolateLocalPlayer = true,
+		IsolateLocalPlayer = false,
 		IsolateLocalPlayerCharacter = false,
-		IsolatePlayers = false,
+		IsolatePlayers = true,
 		IsolateStarterPlayer = false,
 		SavePlayerCharacters = false,
 
@@ -2993,21 +2993,6 @@ local totalsize, chunks = 0, table.create(1)
 		if ToSaveInstance then
 			if mode == "optimized" then
 				mode = "full"
-			end
-
-			for _, key in
-				next,
-				{
-					"IsolateLocalPlayer",
-					"IsolateLocalPlayerCharacter",
-					"IsolatePlayers",
-					"IsolateStarterPlayer",
-					"NilInstances",
-				}
-			do
-				if CustomOptions_valid[key] == nil then
-					OPTIONS[key] = false
-				end
 			end
 		end
 
