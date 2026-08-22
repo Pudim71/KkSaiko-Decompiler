@@ -2588,7 +2588,7 @@ local function synsaveinstance(CustomOptions, CustomOptions2)
 local totalsize, chunks = 0, table.create(1)
 	local savebuffer, savebuffer_size = {}, 1
 	local header =
-		'<!-- Decompiled By KkSaiko -->\n' ..
+		'-- Decompiled By KkSaiko\n' ..
 		'-- ██╗  ██╗██╗  ██╗███████╗ █████╗ ██╗██╗  ██╗ ██████╗     ██████╗ ███████╗ ██████╗ ██████╗ ███╗   ███╗██████╗ ██╗██╗     ███████╗██████╗ \n' ..
 		'-- ██║ ██╔╝██║ ██╔╝██╔════╝██╔══██╗██║██║ ██╔╝██╔═══██╗    ██╔══██╗██╔════╝██╔════╝██╔═══██╗████╗ ████║██╔══██╗██║██║     ██╔════╝██╔══██╗\n' ..
 		'-- █████╔╝ █████╔╝ ███████╗███████║██║█████╔╝ ██║   ██║    ██║  ██║█████╗  ██║     ██║   ██║██╔████╔██║██████╔╝██║██║     █████╗  ██████╔╝\n' ..
@@ -2642,7 +2642,7 @@ local totalsize, chunks = 0, table.create(1)
 		IgnorePropertiesOfNotScriptsOnScriptsMode = false,
 		IgnoreSpecialProperties = arrayToDict({ "Fluxus", "Delta", "Solara" })[EXECUTOR_NAME] or false,
 
-		IsolateLocalPlayer = false,
+		IsolateLocalPlayer = true,
 		IsolateLocalPlayerCharacter = false,
 		IsolatePlayers = true,
 		IsolateStarterPlayer = false,
@@ -3909,7 +3909,13 @@ local totalsize, chunks = 0, table.create(1)
 													end
 												end
 
-value = ""
+value = "-- https://lua.expert/\n-- Decompiled By KkSaiko\n"
+    .. "-- ██╗  ██╗██╗  ██╗███████╗ █████╗ ██╗██╗  ██╗ ██████╗     ██████╗ ███████╗ ██████╗ ██████╗ ███╗   ███╗██████╗ ██╗██╗     ███████╗██████╗ \n"
+    .. "-- ██║ ██╔╝██║ ██╔╝██╔════╝██╔══██╗██║██║ ██╔╝██╔═══██╗    ██╔══██╗██╔════╝██╔════╝██╔═══██╗████╗ ████║██╔══██╗██║██║     ██╔════╝██╔══██╗\n"
+    .. "-- █████╔╝ █████╔╝ ███████╗███████║██║█████╔╝ ██║   ██║    ██║  ██║█████╗  ██║     ██║   ██║██╔████╔██║██████╔╝██║██║     █████╗  ██████╔╝\n"
+    .. "-- ██╔═██╗ ██╔═██╗ ╚════██║██╔══██║██║██╔═██╗ ██║   ██║    ██║  ██║██╔══╝  ██║     ██║   ██║██║╚██╔╝██║██╔═══╝ ██║██║     ██╔══╝  ██╔══██╗\n"
+    .. "-- ██║  ██╗██║  ██╗███████║██║  ██║██║██║  ██╗╚██████╔╝    ██████╔╝███████╗╚██████╗╚██████╔╝██║ ╚═╝ ██║██║     ██║███████╗███████╗██║  ██║\n"
+    .. "-- ╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚═╝╚═╝  ╚═╝ ╚═════╝     ╚═╝ ╚══════╝ ╚═════╝ ╚═════╝ ╚═╝     ╚═╝╚═╝     ╚═╝╚══════╝╚══════╝╚═╝  ╚═╝\n"
     .. (hasLinkedSource and "" or "")
     .. value
 											end
