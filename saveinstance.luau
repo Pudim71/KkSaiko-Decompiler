@@ -2642,9 +2642,9 @@ local totalsize, chunks = 0, table.create(1)
 		IgnorePropertiesOfNotScriptsOnScriptsMode = false,
 		IgnoreSpecialProperties = arrayToDict({ "Fluxus", "Delta", "Solara" })[EXECUTOR_NAME] or false,
 
-		IsolateLocalPlayer = false,
+		IsolateLocalPlayer = true,
 		IsolateLocalPlayerCharacter = false,
-		IsolatePlayers = true,
+		IsolatePlayers = false,
 		IsolateStarterPlayer = false,
 		SavePlayerCharacters = false,
 
