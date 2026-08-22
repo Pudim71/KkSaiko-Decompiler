@@ -2620,7 +2620,7 @@ local totalsize, chunks = 0, table.create(1)
 		IgnoreList = { "CoreGui", "CorePackages" },
 
 		ExtraInstances = {},
-		NilInstances = true,
+		NilInstances = false,
 		NilInstancesFixes = {},
 
 		SaveCacheInterval = 0x1600 * 10,
@@ -2642,7 +2642,7 @@ local totalsize, chunks = 0, table.create(1)
 		IgnorePropertiesOfNotScriptsOnScriptsMode = false,
 		IgnoreSpecialProperties = arrayToDict({ "Fluxus", "Delta", "Solara" })[EXECUTOR_NAME] or false,
 
-		IsolateLocalPlayer = true,
+		IsolateLocalPlayer = false,
 		IsolateLocalPlayerCharacter = false,
 		IsolatePlayers = true,
 		IsolateStarterPlayer = false,
