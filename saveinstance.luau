@@ -1095,6 +1095,7 @@ do
 		Blacklist = {
 			LuaSourceContainer = { "ScriptGuid" },
 			Instance = { "UniqueId", "HistoryId" },
+			AudioDeviceInput = { "Player" },
 		},
 	}, true)
 
