@@ -2627,7 +2627,7 @@ local totalsize, chunks = 0, table.create(1)
 		SaveCacheInterval = 0x1600 * 10,
 		ShowStatus = true,
 		KillAllScripts = true,
-		SafeMode = true,
+		SafeMode = false,
 		BoostFPS = false,
 		ShutdownWhenDone = false,
 		AntiIdle = false,
@@ -2672,7 +2672,7 @@ local totalsize, chunks = 0, table.create(1)
 			Status = "Model",
 		},
 
-		IgnoreSharedStrings = true,
+		IgnoreSharedStrings = false,
 		SharedStringOverwrite = false,
 		TreatUnionsAsParts = false,
 		AlternativeWritefile = not arrayToDict({ "WRD", "Xeno", "Zorara" })[EXECUTOR_NAME],
