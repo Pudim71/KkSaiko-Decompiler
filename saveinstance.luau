@@ -68,6 +68,13 @@ local writefile = writefile
 local getscriptbytecode = global_container.getscriptbytecode
 local base64encode = global_container.base64encode
 
+pcall(function()
+	local EncodingService = game:GetService("EncodingService")
+	base64encode = function(raw)
+		return buffer.tostring(EncodingService:Base64Encode(buffer.fromstring(raw)))
+	end
+end)
+
 local service = setmetatable({}, {
 	__index = function(self, serviceName)
 		local o, s = pcall(Instance.new, serviceName)
@@ -89,7 +96,7 @@ local service = setmetatable({}, {
 local sharedStringId = 1e15
 local sharedStrings = setmetatable({}, {
 	__index = function(self, str)
-		local id = tostring(sharedStringId)
+		local id = base64encode(tostring(sharedStringId))
 		sharedStringId = sharedStringId + 1
 
 		self[str] = id
@@ -2627,7 +2634,7 @@ local totalsize, chunks = 0, table.create(1)
 		SaveCacheInterval = 0x1600 * 10,
 		ShowStatus = true,
 		KillAllScripts = true,
-		SafeMode = false,
+		SafeMode = true,
 		BoostFPS = false,
 		ShutdownWhenDone = false,
 		AntiIdle = false,
@@ -4333,32 +4340,30 @@ value = "-- Decompiled By KkSaiko\n"
 	end
 
 	do
-		if OPTIONS.SafeMode then
-			local LocalPlayer = GetLocalPlayer()
+if OPTIONS.SafeMode then
+	task.spawn(function()
+		local LocalPlayer = GetLocalPlayer()
 
-			local PlayerScripts = LocalPlayer:FindFirstChildOfClass("PlayerScripts")
-			if PlayerScripts then
-				local function makeInstanceOverride(instance)
-					local children = instance:GetChildren()
-					InstancesOverrides[instance] = {
-						__Children = children,
-					}
-					for _, child in next, children do
-						makeInstanceOverride(child)
-					end
-				end
-				makeInstanceOverride(PlayerScripts)
-
-				InstancesOverrides[LocalPlayer] = {
-					__Children = LocalPlayer:GetChildren(),
-					Properties = { Name = "[" .. LocalPlayer.ClassName .. "] " .. LocalPlayer.Name },
-				}
-			end
-
-			if CustomOptions_valid["BoostFPS"] == nil then
-				OPTIONS.BoostFPS = true
-			end
+		local msg =
+			"[KKSAIKO DECOMPILER SAFEMODE]\nSaving..\DECOMPILING..."
+		local function Kick()
+			LocalPlayer:Kick(msg)
 		end
+
+		Kick()
+		pcall(function()
+			Connect(service.GuiService.ErrorMessageChanged, function()
+				if service.GuiService:GetErrorMessage() ~= msg then
+					Kick()
+				end
+			end)
+		end)
+	end)
+
+	if CustomOptions_valid["BoostFPS"] == nil then
+		OPTIONS.BoostFPS = true
+	end
+end
 
 		if OPTIONS.BoostFPS then
 			pcall(function()
