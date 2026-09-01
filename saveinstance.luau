@@ -4345,7 +4345,7 @@ if OPTIONS.SafeMode then
 		local LocalPlayer = GetLocalPlayer()
 
 		local msg =
-			"[KKSAIKO DECOMPILER SAFEMODE]\nSaving..\DECOMPILING..."
+			"[KKSAIKO DECOMPILER SAFEMODE]\nSaving.."
 		local function Kick()
 			LocalPlayer:Kick(msg)
 		end
