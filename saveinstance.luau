@@ -89,7 +89,7 @@ local service = setmetatable({}, {
 local sharedStringId = 1e15
 local sharedStrings = setmetatable({}, {
 	__index = function(self, str)
-		local id = base64encode(tostring(sharedStringId))
+		local id = tostring(sharedStringId)
 		sharedStringId = sharedStringId + 1
 
 		self[str] = id
