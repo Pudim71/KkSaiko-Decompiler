@@ -3547,8 +3547,6 @@ local totalsize, chunks = 0, table.create(1)
 		if StatusText then
 			StatusText.Text = "Saving.. Size: " .. get_size_format()
 		end
-
-		wait_for_render()
 	end
 
 	local function save_specific(className, properties)
@@ -4141,7 +4139,7 @@ value = "-- Decompiled By KkSaiko\n"
 						run_with_loading(
 							"Writing to File " .. math.round(currentlen / totallen * 100) .. "% (Depends on Exec)",
 							nil,
-							true,
+							false,
 							appendfile,
 							placename,
 							savestr
@@ -4159,7 +4157,7 @@ value = "-- Decompiled By KkSaiko\n"
 				run_with_loading(
 					"Writing " .. get_size_format() .. " to File (Depends on Exec)",
 					nil,
-					true,
+					false,
 					writefile,
 					placename,
 					buildFinalString(chunks)
